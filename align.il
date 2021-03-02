@@ -1,6 +1,6 @@
 ;
-;	$Source: align.il $ $Revision: 23:fab0537ecbee $ $Branch$ $Rev: 23 $
-;	$Author: Kapustin $ $Date: 2011-06-19 15:27 +0300 $
+;	$Source: align.il $ $Revision: 31:8636e158e117 $ $Branch$ $Rev: 31 $
+;	$Author: Kapustin $ $Date: 2011-06-28 01:15 +0300 $
 ;
 ;	Files required:	align_do.il
 ;					align_utils.il
@@ -13,12 +13,16 @@
 ;					align-top.bmp
 ;					distributeH.bmp
 ;					distributeV.bmp
+;					pickH.bmp
+;					pickV.bmp
 ;	Place form files to %formpath%.
 ; 	Place bitmap files to %bmppath%.
 ;
-;	skill load "o:\\Sripts\\align\\align_utils.il"
-; 	skill load "o:\\Sripts\\align\\align_do.il"
-;	skill load "o:\\Sripts\\align\\align.il"
+;	skill load "o:/Sripts/align/align.il"
+; 	skill load "o:/Sripts/align/align_do.il"
+;	skill load "o:/Sripts/align/align_utils.il"
+
+
 
 axlCmdRegister( "align" 'align  ?cmdType "interactive" ?doneCmd 'alignDone ?cancelCmd 'alignCancel )
 axlUIMenuRegister( "move" '( ("&Align" "align") ) )
@@ -45,11 +49,12 @@ procedure( align( )
 		while( _finish == nil
 			; get objects from previous iteration
 			_selectedObjects = axlGetSelSet()
+			if(_selectedObjects then axlMsgPut("Choose action"))
 			; remove fixed objects from selection
 			_selectedObjects = checkForFixedObjects(_selectedObjects)
+
 			; wait for object selection
 			axlSelect(?groupMode nil ?prompt nil)
-			if(_selectedObjects then axlMsgPut("Choose action"))
 			; execute operation chosen in form
 			if(_handler then
 				if(_selectedObjects
@@ -90,7 +95,11 @@ defun( alignDone ()
 	)
 );end-fun
 defun( alignOops ()
+	if(_handler then axlFinishEnterFun()) ;for exit from 'doPickH or 'doPickV
 	axlDBTransactionOops(_transactionMark)
+	; restore selection
+	_selectedObjects = refreshIDs(_selectedObjects)
+	axlAddSelectObject(_selectedObjects)
 );end-fun
 defun( alignCancel ()
 	(prog ()
@@ -117,31 +126,58 @@ defun( initForm () ;
 	;_formPtr = axlFormCreate( (gensym) "align.form" '(ne canvas msglines 0) '_parmCallBack t)
 	if( ( _formData == nil ) then
 		_formData = t
-		axlFormSetField(_formPtr "bxSnapToGrid" t)
-		_formData~>snapToGrid = t
-		axlFormSetField(_formPtr "bxGapH" t)
-		axlFormSetField(_formPtr "bxGapV" t)
-		_formData~>useGap = t
+
+		axlFormSetField(_formPtr "bxPickH" nil)
+		_formData~>usePickH = nil
 		axlFormSetField(_formPtr "bxStepH" nil)
 		_formData~>useStepH = nil
+		axlFormSetField(_formPtr "bxPickV" nil)
+		_formData~>usePickV = nil
 		axlFormSetField(_formPtr "bxStepV" nil)
 		_formData~>useStepV = nil
+
+		axlFormSetField(_formPtr "fPickH" 0.0)
+		_formData~>pickH = 0.0
 		axlFormSetField(_formPtr "fStepH" 100.0)
 		_formData~>stepH = 100.0
+		axlFormSetField(_formPtr "fPickV" 0.0)
+		_formData~>pickV = 0.0
 		axlFormSetField(_formPtr "fStepV" 100.0)
 		_formData~>stepV = 100.0
+		axlFormSetField(_formPtr "bxGap" t)
+		_formData~>useGap = t
+		axlFormSetField(_formPtr "bxStretch" t)
+		_formData~>useStretch = t
+		axlFormSetField(_formPtr "bxSnapToGrid" t)
+		_formData~>snapToGrid = t
 		axlFormSetField(_formPtr "cmbSnapPoint" "center")
 		_formData~>snapPoint = "center"
 	else
-		axlFormSetField(_formPtr "bxSnapToGrid" _formData->snapToGrid)
-		axlFormSetField(_formPtr "bxGapH" _formData->useGap)
-		axlFormSetField(_formPtr "bxGapV" _formData->useGap)
+		axlFormSetField(_formPtr "bxPickH" _formData->usePickH)
 		axlFormSetField(_formPtr "bxStepH" _formData->useStepH)
+		axlFormSetField(_formPtr "bxPickV" _formData->usePickV)
 		axlFormSetField(_formPtr "bxStepV" _formData->useStepV)
+		axlFormSetField(_formPtr "fPickH" _formData->pickH)
 		axlFormSetField(_formPtr "fStepH" _formData->stepH)
+		axlFormSetField(_formPtr "fPickV" _formData->pickV)
 		axlFormSetField(_formPtr "fStepV" _formData->stepV)
+		axlFormSetField(_formPtr "bxGap" _formData->useGap)
+		axlFormSetField(_formPtr "bxStretch" _formData->useStretch)
+		axlFormSetField(_formPtr "bxSnapToGrid" _formData->snapToGrid)
 		axlFormSetField(_formPtr "cmbSnapPoint" _formData->snapPoint)
 	)
+
+	if(_formData->usePickH
+		then axlFormSetFieldEditable(_formPtr "fPickH" t)
+		else axlFormSetFieldEditable(_formPtr "fPickH" nil)
+	)
+	if(_formData->usePickV
+		then axlFormSetFieldEditable(_formPtr "fPickV" t)
+		else axlFormSetFieldEditable(_formPtr "fPickV" nil)
+	)
+; temporary disabled features
+	axlFormSetFieldEditable(_formPtr "bxStretch" nil)
+; temporary disabled features
 
 	if(_formData->useStepH
 		then axlFormSetFieldEditable(_formPtr "fStepH" t)
@@ -164,10 +200,26 @@ defun( _parmCallBack (form)
 		( "bnLeft" onLeft() )
 		( "bnCenterV"  onCenterV() )
 		( "bnRight" onRight() )
-		( "bxGapH"
-			_formData~>useGap = _formPtr->curValue
-			axlFormSetField(_formPtr "bxGapV" _formData->useGap)
+
+		( "bxPickH" _formData~>usePickH = _formPtr->curValue
+			if(_formData->usePickH
+				then axlFormSetFieldEditable(_formPtr "fPickH" t)
+				else axlFormSetFieldEditable(_formPtr "fPickH" nil)
+			)
 		)
+		( "fPickH" _formData~>pickH = _formPtr->curValue )
+		( "bnPickH" onPickH() )
+
+		( "bxPickV" _formData~>usePickV = _formPtr->curValue
+			if(_formData->usePickV
+				then axlFormSetFieldEditable(_formPtr "fPickV" t)
+				else axlFormSetFieldEditable(_formPtr "fPickV" nil)
+			)
+		)
+		( "fPickV" _formData~>pickV = _formPtr->curValue )
+		( "bnPickV" onPickV() )
+
+
 		( "bxStepH"
 			_formData~>useStepH = _formPtr->curValue
 			if(_formData->useStepH
@@ -177,10 +229,7 @@ defun( _parmCallBack (form)
 		)
 		( "fStepH" _formData~>stepH = _formPtr->curValue )
 		( "bnDistributeH" onDistributeH() )
-		( "bxGapV"
-			_formData~>useGap = _formPtr->curValue
-			axlFormSetField(_formPtr "bxGapH" _formData->useGap)
-		)
+
 		( "bxStepV"
 			_formData~>useStepV = _formPtr->curValue
 			if(_formData->useStepV
@@ -190,11 +239,11 @@ defun( _parmCallBack (form)
 		)
 		( "fStepV" _formData~>stepV = _formPtr->curValue )
 		( "bnDistributeV" onDistributeV() )
+
+		( "bxGap" _formData~>useGap = _formPtr->curValue)
+		( "bxStretch" _formData~>useStretch = _formPtr->curValue)
 		( "bxSnapToGrid" _formData~>snapToGrid = _formPtr->curValue	)
 		( "cmbSnapPoint" _formData~>snapPoint = _formPtr->curValue )
-		( "bnDone" alignDone() )
-		( "bnOops" alignOops() )
-		( "bnCancel" alignCancel() )
 	);case
 );end-defun
 

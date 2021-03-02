@@ -12,11 +12,11 @@ FORM toolwindow
 #--------- Common ---------------------------
 		GROUP "Horizontal"
 			FLOC 1 0
-			FSIZE 25 12
+			FSIZE 25 13
 		ENDGROUP
 		GROUP "Vertical"
-			FLOC 1 11
-			FSIZE 25 12
+			FLOC 1 12
+			FSIZE 25 13
 		ENDGROUP
 #--------- Align H ----------------------------	
 		FIELD align-top
@@ -51,112 +51,165 @@ FORM toolwindow
 			FLOC 18 4
 			MENUBUTTON "Bottom" 7 3
 		ENDFIELD
-#--------- Distribute H -----------------------
-		FIELD bxGapH
-			FLOC 12 7
-			CHECKLIST "Gap"
+		
+#---------    Pick H     -----------------------
+		FIELD bnPickH
+			FLOC 2 7
+			MENUBUTTON "Pick" 7 3
 		ENDFIELD
-		FIELD bxStepH
-			FLOC 18 7
-			CHECKLIST "Step"
-		ENDFIELD
-		FIELD fStepH
-			FLOC 13 9
-			REALFILLIN 8 8
-			DECIMAL 2
+		FIELD pickH
+			THUMBNAIL pickH
+			OPTIONS stretch
+			FLOC 9 7
+			FSIZE 3 2
 		ENDFIELD
 		
+		FIELD bxPickH
+			FLOC 14 7
+			CHECKLIST
+		ENDFIELD
+		FIELD fPickH
+			FLOC 17 7
+			REALFILLIN 7 10
+			DECIMAL 2
+		ENDFIELD
+# skill axlFormTest("align.form")
+#--------- Distribute H -----------------------
+		FIELD bnDistributeH
+			FLOC 2 10
+			MENUBUTTON "Distrib" 7 3
+		ENDFIELD
 		FIELD distributeH
 			THUMBNAIL distributeH
 			OPTIONS stretch
-			FLOC 4 7
+			FLOC 9 10
 			FSIZE 3 2
 		ENDFIELD
-		FIELD bnDistributeH
-			FLOC 2 9
-			MENUBUTTON "Distribute" 7 3
+		
+		FIELD bxStepH
+			FLOC 14 10
+			CHECKLIST
 		ENDFIELD
+		FIELD fStepH
+			FLOC 17 10
+			REALFILLIN 7 10
+			DECIMAL 2
+		ENDFIELD
+
 #--------- Align V ----------------------------			
 		FIELD align-left
 			THUMBNAIL align-left
 			OPTIONS stretch
-			FLOC 4 13
+			FLOC 4 14
 			FSIZE 3 2
 		ENDFIELD
 		FIELD bnLeft
-			FLOC 2 15
+			FLOC 2 16
 			MENUBUTTON "Left" 7 3
 		ENDFIELD
 		
 		FIELD align-centerV
 			THUMBNAIL align-centerV
 			OPTIONS stretch
-			FLOC 12 13
+			FLOC 12 14
 			FSIZE 3 2
 		ENDFIELD
 		FIELD bnCenterV
-			FLOC 10 15
+			FLOC 10 16
 			MENUBUTTON "Center" 7 3
 		ENDFIELD
 		
 		FIELD align-right
 			THUMBNAIL align-right
 			OPTIONS stretch
-			FLOC 20 13
+			FLOC 20 14
 			FSIZE 3 2
 		ENDFIELD
 		FIELD bnRight
-			FLOC 18 15
+			FLOC 18 16
 			MENUBUTTON "Right" 7 3
 		ENDFIELD
-#--------- Distribute V -----------------------
-		FIELD bxGapV
-			FLOC 12 18
-			CHECKLIST "Gap"
+
+#---------    Pick V     -----------------------
+		FIELD bnPickV
+			FLOC 2 19
+			MENUBUTTON "Pick" 7 3
 		ENDFIELD
-		FIELD bxStepV
-			FLOC 18 18
-			CHECKLIST "Step"
-		ENDFIELD
-		FIELD fStepV
-			FLOC 13 20
-			REALFILLIN 8 8
-			DECIMAL 2
+		FIELD pickV
+			THUMBNAIL pickV
+			OPTIONS stretch
+			FLOC 9 19
+			FSIZE 3 2
 		ENDFIELD
 		
+		FIELD bxPickV
+			FLOC 14 19
+			CHECKLIST
+		ENDFIELD
+		FIELD fPickV
+			FLOC 17 19
+			REALFILLIN 7 10
+			DECIMAL 2
+		ENDFIELD
+# skill axlFormTest("align.form")
+#--------- Distribute V -----------------------
+
+		FIELD bnDistributeV
+			FLOC 2 22
+			MENUBUTTON "Distrib" 7 3
+		ENDFIELD
 		FIELD distributeV
 			THUMBNAIL distributeV
 			OPTIONS stretch
-			FLOC 4 18
+			FLOC 9 22
 			FSIZE 3 2
 		ENDFIELD
-		FIELD bnDistributeV
-			FLOC 2 20
-			MENUBUTTON "Distribute" 7 3
+		
+		FIELD bxStepV
+			FLOC 14 22
+			CHECKLIST
 		ENDFIELD
+		FIELD fStepV
+			FLOC 17 22
+			REALFILLIN 7 10
+			DECIMAL 2
+		ENDFIELD
+		
+		
+		
 #--------- Common ---------------------------
+		FIELD bxGap
+			FLOC 2 25
+			CHECKLIST "Gap"
+		ENDFIELD
+		
+		FIELD bxStretch
+			FLOC 13 25
+			CHECKLIST "Stretch etch"
+		ENDFIELD
+		
 		FIELD bxSnapToGrid
-			FLOC 2 24
-			CHECKLIST "Snap to grid"
+			FLOC 2 27
+			CHECKLIST "Grid snap"
 		ENDFIELD
 		FIELD cmbSnapPoint
-			FLOC 13 24
+			FLOC 13 27
 			ENUMSET 10
 			POP "snap_point"
 		ENDFIELD
 		
-		FIELD bnDone
-			FLOC 2 27
-			MENUBUTTON "Done " 7 3
-		ENDFIELD
-		FIELD bnOops
-			FLOC 10 27
-			MENUBUTTON "Oops " 7 3
-		ENDFIELD
-		FIELD bnCancel
-			FLOC 18 27
-			MENUBUTTON "Cancel" 7 3
-		ENDFIELD
+#		FIELD bnDone
+#			FLOC 2 27
+#			MENUBUTTON "Done " 7 2
+#		ENDFIELD
+#		FIELD bnOops
+#			FLOC 10 27
+#			MENUBUTTON "Oops " 7 2
+#		ENDFIELD
+#		FIELD bnCancel
+#			FLOC 18 27
+#			MENUBUTTON "Cancel" 7 2
+#		ENDFIELD
 
 	ENDTILE
 ENDFORM

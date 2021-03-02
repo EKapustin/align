@@ -1,20 +1,53 @@
 ;
-;	$Source: align_utils.il $ $Revision: 21:b82ac9494a26 $ $Branch$ $Rev: 21 $
-;	$Author: Kapustin $ $Date: 2011-06-05 00:46 +0300 $
+;	$Source: align_utils.il $ $Revision: 32:720262a267b1 $ $Branch$ $Rev: 32 $
+;	$Author: Kapustin $ $Date: 2011-06-28 01:48 +0300 $
 ;
 ;	skill load "o:\\Sripts\\align\\align_utils.il"
 
 ;
 ; Get the point snapped to the nearest grid (if snapToGrid mode is true).
 ;
-defun( griddedPoint (point)
-	let( (snapToGrid grp)
-;		if( _formData
-;			then
-				snapToGrid = _formData->snapToGrid
-;			else snapToGrid = t
-;		)
-		axlEnterPoint( ?points list( point) ?gridSnap snapToGrid)
+defun( griddedPoint (point grids)
+	let( (xOrigin yOrigin xMajor yMajor pointX pointY)
+		pointX = xCoord(point)
+		pointY = yCoord(point)
+		if( _formData->snapToGrid then
+			xMajor = grids->xMajor
+			yMajor = grids->yMajor
+			xOrigin = grids->xOrigin
+			yOrigin = grids->yOrigin
+
+			pointX = round(pointX/xMajor)*xMajor + xOrigin
+			pointY = round(pointY/yMajor)*yMajor + yOrigin
+		)
+		list(pointX pointY) ;return
+	)
+);defun
+
+;
+; Get the current grid.
+;
+defun( getCurrentGrid (selectedObjects)
+	prog( (grids isMirrored)
+		case( car(selectedObjects)->objType
+			( ("group" "symbol" "pin" "via") ; use etch grid
+				isMirrored = car(selectedObjects)->isMirrored
+				foreach( item _selectedObjects
+					if( isMirrored == item->isMirrored
+					then isMirrored = item->isMirrored
+					else return(axlDBGridGet("TOP")) ;both layers, use TOP
+					)
+				)
+				if( isMirrored
+				then return(axlDBGridGet("BOTTOM")) ; mirrored, use BOT
+				else return(axlDBGridGet("TOP"))	; non mirrores, use TOP
+				)
+			)
+			( "text"	;use non-etch grid
+				grids = axlDBGridGet("non-etch")
+			)
+		)
+		return(grids)
 	)
 );defun
 
@@ -22,11 +55,11 @@ defun( griddedPoint (point)
 ; Get maximum X coordinate from list of objects
 ;
 defun( maxX (lObjects)
-	let( (obj ptX result)
+	let( (obj pointX result)
 		result = -1000000.0
 		foreach( obj lObjects
-			ptX = xCoord(getObjectLocation(obj))
-			result = max(ptX result)
+			pointX = xCoord(getObjectLocation(obj))
+			result = max(pointX result)
 		)
 		result
 	)
@@ -36,11 +69,11 @@ defun( maxX (lObjects)
 ; Get minimum X coordinate from list of objects
 ;
 defun( minX (lObjects)
-	let( (obj ptX result)
+	let( (obj pointX result)
 		result = 1000000.0
 		foreach( obj lObjects
-			ptX = xCoord(getObjectLocation(obj))
-			result = min(ptX result)
+			pointX = xCoord(getObjectLocation(obj))
+			result = min(pointX result)
 		)
 		result
 	)
@@ -50,11 +83,11 @@ defun( minX (lObjects)
 ; Get maximum Y coordinate from list of objects
 ;
 defun( maxY (lObjects)
-	let( (obj ptY result)
+	let( (obj pointY result)
 		result = -1000000.0
 		foreach( obj lObjects
-			ptY = yCoord(getObjectLocation(obj))
-			result = max(ptY result)
+			pointY = yCoord(getObjectLocation(obj))
+			result = max(pointY result)
 		)
 		result
 	)
@@ -64,11 +97,11 @@ defun( maxY (lObjects)
 ; Get minimum Y coordinate from list of objects
 ;
 defun( minY (lObjects)
-	let( (obj ptY result)
+	let( (obj pointY result)
 		result = 1000000.0
 		foreach( obj lObjects
-			ptY = yCoord(getObjectLocation(obj))
-			result = min(ptY result)
+			pointY = yCoord(getObjectLocation(obj))
+			result = min(pointY result)
 		)
 		result
 	)
@@ -202,11 +235,11 @@ defun( getBBoxes (objectList)
 ; Get minimal X boundary box coordinate for given BBoxes.
 ;
 defun( getMinBBoxX (boxList)
-	let( ( ptX box result)
+	let( ( pointX box result)
 		result = 1000000.0
 		foreach( box boxList
-			ptX = xCoord(car(box))
-			result = min(ptX result)
+			pointX = xCoord(car(box))
+			result = min(pointX result)
 		)
 		result
 	) ; let
@@ -216,11 +249,11 @@ defun( getMinBBoxX (boxList)
 ; Get maximal X boundary box coordinate for given BBoxes.
 ;
 defun( getMaxBBoxX (boxList)
-	let( ( ptX box result)
+	let( ( pointX box result)
 		result = -1000000.0
 		foreach( box boxList
-			ptX = xCoord(cadr(box))
-			result = max(ptX result)
+			pointX = xCoord(cadr(box))
+			result = max(pointX result)
 		)
 		result
 	) ; let
@@ -230,25 +263,25 @@ defun( getMaxBBoxX (boxList)
 ; Get minimal Y boundary box coordinate for given BBoxes.
 ;
 defun( getMinBBoxY (boxList)
-	let( ( ptY box result)
+	let( ( pointY box result)
 		result = 1000000.0
 		foreach( box boxList
-			ptY = yCoord(car(box))
-			result = min(ptY result)
+			pointY = yCoord(car(box))
+			result = min(pointY result)
 		)
 		result
 	) ; let
 ) ; defun
 
 ;
-; Get maximal X boundary box coordinate for given BBoxes.
+; Get maximal Y boundary box coordinate for given BBoxes.
 ;
 defun( getMaxBBoxY (boxList)
-	let( ( ptY box result)
+	let( ( pointY box result)
 		result = -1000000.0
 		foreach( box boxList
-			ptY = yCoord(cadr(box))
-			result = max(ptY result)
+			pointY = yCoord(cadr(box))
+			result = max(pointY result)
 		)
 		result
 	) ; let
@@ -270,8 +303,7 @@ defun( refreshIDs (objectList)
 defun( checkForFixedObjects (objectList)
 	let( ( x prop object resultList)
 		foreach( object objectList
-			prop = axlDBGetProperties(object '("allegro"))
-			if(exists( x prop (x == '(FIXED t)))
+			if( axlDBIsFixed(object nil)
 				; remove from selection
 				then axlSubSelectObject(object)
 				; place to returned list
