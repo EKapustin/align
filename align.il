@@ -1,6 +1,6 @@
 ;
-;	$Source: align.il $ $Revision: 45:9e29e1c746a6 $ $Branch$ $Rev: 45 $
-;	$Author: Kapustin $ $Date: 2011-07-22 01:53 +0300 $
+;	$Source: align.il $ $Revision: 56:cbcf9511a712 $ $Branch$ $Rev: 56 $
+;	$Author: Kapustin $ $Date: 2011-08-07 15:34 +0300 $
 ;
 ;	Files required:	align_do.il
 ;					align_utils.il
@@ -92,8 +92,6 @@ procedure( align( @optional components )
 defun( alignDone ()
 	axlDBTransactionCommit( _transactionMark )
 	exitFromAlign()
-	if( _shapeMode == 'wysiwyg axlShapeDynamicUpdate(nil nil))
-	_shapeMode = nil
 );end-fun
 defun( alignOops ()
 	if(_handler then axlFinishEnterFun()) ;for exit from 'doPickH or 'doPickV
@@ -106,7 +104,6 @@ defun( alignCancel ()
 	axlDBControl('drcEnable nil)
 	axlDBTransactionRollback( _transactionMark )
 	exitFromAlign()
-	_shapeMode = nil
 );end-fun
 defun( exitFromAlign ()
 	_finish = t
@@ -165,6 +162,8 @@ when( (axlIsDebug) axlMsgPut("initForm"))
 		_formData->snapToGrid = t
 		axlFormSetField(_formPtr "cmbSnapPoint" "center")
 		_formData->snapPoint = "center"
+		axlFormSetField(_formPtr "sPinNumber" "1")
+		_formData->snapPinNumber = "1"
 	else
 		axlFormSetField(_formPtr "bxPickH" _formData->usePickH)
 		axlFormSetField(_formPtr "bxStepH" _formData->useStepH)
@@ -179,6 +178,7 @@ when( (axlIsDebug) axlMsgPut("initForm"))
 		axlFormSetField(_formPtr "bxRipup" _formData->useRipup)
 		axlFormSetField(_formPtr "bxSnapToGrid" _formData->snapToGrid)
 		axlFormSetField(_formPtr "cmbSnapPoint" _formData->snapPoint)
+		axlFormSetField(_formPtr "sPinNumber" _formData->snapPinNumber)
 	)
 
 	if(_formData->usePickH
@@ -208,6 +208,12 @@ when( (axlIsDebug) axlMsgPut("initForm"))
 		axlFormSetField(_formPtr "bxStretch" nil)
 		_formData->useStretch = nil
 	)
+	
+	if( (_formData->snapPoint == "pin")
+		then axlFormSetFieldVisible( _formPtr "sPinNumber" 1)
+		else axlFormSetFieldVisible( _formPtr "sPinNumber" 0)
+	)
+	
 ;	axlFormDisplay(_formPtr)
 );end-defun
 
@@ -278,7 +284,15 @@ when( (axlIsDebug) axlMsgPut("_parmCallBack"))
 			)
 		)
 		( "bxSnapToGrid" _formData->snapToGrid = _formPtr->curValue	)
-		( "cmbSnapPoint" _formData->snapPoint = _formPtr->curValue )
+		( "cmbSnapPoint" 
+			_formData->snapPoint = _formPtr->curValue
+			if( (_formData->snapPoint == "pin")
+				then axlFormSetFieldVisible( _formPtr "sPinNumber" 1)
+				else axlFormSetFieldVisible( _formPtr "sPinNumber" 0)
+			)
+		)
+		( "sPinNumber" _formData->snapPinNumber = _formPtr->curValue)
+		
 	);case
 );end-defun
 

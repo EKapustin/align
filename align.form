@@ -6,7 +6,7 @@ FORM toolwindow
 	PORT 26 40
 	HEADER "Align & Distribute"
 	
-	POPUP <snap_point>"Origin""origin","Body Center""center","Pin #1""pin".
+	POPUP <snap_point>"Origin""origin","Center""center","Pin""pin".
 	
 	TILE
 #--------- Common ---------------------------
@@ -196,9 +196,14 @@ FORM toolwindow
 		ENDFIELD
 		FIELD cmbSnapPoint
 			FLOC 13 29
-			ENUMSET 10
+			ENUMSET 6
 			POP "snap_point"
 		ENDFIELD
+		FIELD sPinNumber
+			FLOC 21 29
+			STRFILLIN 3 7
+		ENDFIELD
+		
 # skill axlFormTest("align.form")
 	ENDTILE
 ENDFORM

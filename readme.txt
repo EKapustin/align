@@ -2,8 +2,10 @@ Skill scripts for aligning and distibutioin objects in Allegro PCB Editor.
 Apply for object: Group, Component, Pin, Via, Text
 !!! This script replace standart Allegro feature: in Place Mode select objects, then Right click -> Align components
 
-Features
-+ horizontally and vertically aligning  (snap to Origin, Body, Pin1)
+Features:
++ snap to Origin, Body Center
++ snap to any Pin
++ horizontally and vertically aligning
 + snap to grid
 + aligning by object boundary (Top, Bottom, Left, Right)
 + distibution between utmost left/right (top/bottom) object, auto calculating step
@@ -14,6 +16,7 @@ Features
 + stretch CLine
 - hotkey for each action
 + store script settings in design or separated file (dependent on "STORE_PLACE" variable in align.il)
+
 
 Issues:
 - havn't undo. How create undo?

@@ -1,6 +1,6 @@
 ;
-;	$Source: align_utils.il $ $Revision: 46:55336367f001 $ $Branch$ $Rev: 46 $
-;	$Author: Kapustin $ $Date: 2011-07-22 01:57 +0300 $
+;	$Source: align_utils.il $ $Revision: 56:cbcf9511a712 $ $Branch$ $Rev: 56 $
+;	$Author: Kapustin $ $Date: 2011-08-07 15:34 +0300 $
 ;
 ;	skill load "o:\\Sripts\\align\\align_utils.il"
 
@@ -173,12 +173,39 @@ defun( comparePositionY ( obj1 obj2 )
 ; Get object location point according to selected mode (Origin, Body Center, Pin)
 ;
 defun( getObjectLocation (object)
-	let( ( result)
+	let( (result message)
 		case( _formData->snapPoint
 			( "origin" result = axlDBAltOrigin('origin object) )
 			( "center" result = axlDBAltOrigin('center object) )
-			( "pin" result = axlDBAltOrigin('pin1 object) )
+			( "pin" 
+				result = getPinLocation(object _formData->snapPinNumber)
+				when( !result 
+					message = strcat("WARNING: Pin '", _formData->snapPinNumber, "' not found")
+					if( object->refdes 
+						then message = strcat(message, " for symbol '", object->refdes, "', got body center.")
+						else message = strcat(message, ", got body center.")
+					)
+					axlMsgPut(message)
+					result = axlDBAltOrigin('center object)
+				)
+			)
 		);case
+		result
+	) ; let
+) ; defun+
+
+;
+; Get location for given object's pin
+; Return nil if pin not found.
+defun( getPinLocation (object pinNumber)
+	let( (result number)
+		pinNumber = upperCase(pinNumber)
+		pinList = object->pins
+		foreach( pin pinList
+			number = pin->number
+			number = upperCase(number)
+			when( pinNumber == number result = pin->xy)			
+		)
 		result
 	) ; let
 ) ; defun
@@ -320,7 +347,7 @@ defun( checkForFixedObjects (objectList)
 ;
 defun( moveObject (object deltaPoint) ; object = car(_selectedObjects) deltaPoint = list(10.0 -10.0) moveObject(object deltaPoint)
 	let( (segmentsToCreate segmentsToRemove pinList pin pinXY paths isVia
-			path segments segment startEnd newStartEnd segmentToCreate x1 y1 x2 y2)
+			path segments segment startEnd newStartEnd segmentToCreate x1 y1 x2 y2 net)
 		if( (car(deltaPoint) != 0.0 || cadr(deltaPoint) != 0.0) then
 			if( (_formData->useStretch || _formData->useRipup) then
 				;get list of pins
@@ -383,7 +410,9 @@ defun( moveObject (object deltaPoint) ; object = car(_selectedObjects) deltaPoin
 			axlTransformObject( object ?move deltaPoint )
 			when( isVia
 				; restore net
-				axlDBAssignNet(object car(segmentsToCreate)->netname)
+				net = car(segmentsToCreate)->netname
+				when( net axlDBAssignNet(object net) )
+				
 			)
 			; create new segments
 			if( (segmentsToCreate && _formData->useStretch) then
