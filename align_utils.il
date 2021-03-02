@@ -1,6 +1,6 @@
 ;
-;	$Source: align_utils.il $ $Revision: 10:ce9f781028bc $ $Branch$ $Rev: 10 $
-;	$Author: Kapustin $ $Date: 2011-05-31 01:48 +0300 $
+;	$Source: align_utils.il $ $Revision: 21:b82ac9494a26 $ $Branch$ $Rev: 21 $
+;	$Author: Kapustin $ $Date: 2011-06-05 00:46 +0300 $
 ;
 ;	skill load "o:\\Sripts\\align\\align_utils.il"
 
@@ -9,10 +9,11 @@
 ;
 defun( griddedPoint (point)
 	let( (snapToGrid grp)
-		if( _formData
-			then snapToGrid = _formData->snapToGrid
-			else snapToGrid = t
-		)
+;		if( _formData
+;			then
+				snapToGrid = _formData->snapToGrid
+;			else snapToGrid = t
+;		)
 		axlEnterPoint( ?points list( point) ?gridSnap snapToGrid)
 	)
 );defun
@@ -80,12 +81,27 @@ defun( orderByX (objectList)
 	sort( objectList 'comparePositionX )
 );defun
 defun( comparePositionX ( obj1 obj2 )
-	let( ( pt1x pt2x pt1 pt2)
+	let( ( pt1x pt2x pt1y pt2y pt1 pt2 result)
 		pt1 = getObjectLocation(obj1)
 		pt2 = getObjectLocation(obj2)
 		pt1x = xCoord( pt1 )
 		pt2x = xCoord( pt2 )
-		if( (pt1x < pt2x) t nil)
+		if( (pt1x < pt2x)
+			then result = t
+			else
+				if( (pt1x == pt2x)
+					then
+						; aditionaly compare by Y
+						pt1y = yCoord( pt1 )
+						pt2y = yCoord( pt2 )
+						if( (pt1y < pt2y)
+							then result = t
+							else result = nil
+						)
+					else result = nil
+				)
+		)
+		result
 	) ; let
 ) ; defun
 
@@ -96,12 +112,27 @@ defun( orderByY (objectList)
 	sort( objectList 'comparePositionY )
 );defun
 defun( comparePositionY ( obj1 obj2 )
-	let( ( pt1y pt2y pt1 pt2)
+	let( ( pt1x pt2x pt1y pt2y pt1 pt2 result)
 		pt1 = getObjectLocation(obj1)
 		pt2 = getObjectLocation(obj2)
 		pt1y = yCoord( pt1 )
 		pt2y = yCoord( pt2 )
-		if( (pt1y < pt2y) t nil)
+		if( (pt1y < pt2y)
+			then result = t
+			else
+				if( (pt1y == pt2y)
+					then
+						; aditionaly compare by X
+						pt1x = xCoord( pt1 )
+						pt2x = xCoord( pt2 )
+						if( (pt1x < pt2x)
+							then result = t
+							else result = nil
+						)
+					else result = nil
+				)
+		)
+		result
 	) ; let
 ) ; defun
 
@@ -231,4 +262,24 @@ defun( refreshIDs (objectList)
 		car(resultList) ; get list from "tconc" list
 	) ; let
 ) ; defun
+
+;
+; Check for object have "Fixed" property. If it's true, remove this object from selection.
+; Return list without fixed objects.
+;
+defun( checkForFixedObjects (objectList)
+	let( ( x prop object resultList)
+		foreach( object objectList
+			prop = axlDBGetProperties(object '("allegro"))
+			if(exists( x prop (x == '(FIXED t)))
+				; remove from selection
+				then axlSubSelectObject(object)
+				; place to returned list
+				else resultList = tconc(resultList object)
+			)
+		)
+		car(resultList) ; get list from "tconc" list
+	) ; let
+) ; defun
+
 

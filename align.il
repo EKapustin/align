@@ -1,6 +1,6 @@
 ;
-;	$Source: align.il $ $Revision: 14:1c4a6f6ad5f2 $ $Branch$ $Rev: 14 $
-;	$Author: Kapustin $ $Date: 2011-05-31 22:51 +0300 $
+;	$Source: align.il $ $Revision: 21:b82ac9494a26 $ $Branch$ $Rev: 21 $
+;	$Author: Kapustin $ $Date: 2011-06-05 00:46 +0300 $
 ;
 ;	Files required:	align_do.il
 ;					align_utils.il
@@ -13,13 +13,14 @@
 ;					align-top.bmp
 ;					distributeH.bmp
 ;					distributeV.bmp
-;	Place form and bitmap files to %formpath%.
+;	Place form files to %formpath%.
+; 	Place bitmap files to %bmppath%.
 ;
 ;	skill load "o:\\Sripts\\align\\align_utils.il"
 ; 	skill load "o:\\Sripts\\align\\align_do.il"
 ;	skill load "o:\\Sripts\\align\\align.il"
 
-axlCmdRegister( "align" 'align )
+axlCmdRegister( "align" 'align  ?cmdType "interactive" ?doneCmd 'alignDone ?cancelCmd 'alignCancel )
 axlUIMenuRegister( "move" '( ("&Align" "align") ) )
 
 procedure( align( )
@@ -28,6 +29,7 @@ procedure( align( )
 		axlClearSelSet()
 		initGlobalVariable()
 		initForm()
+		initHotKeys()
 
 		popupA = axlUIPopupDefine( nil
 				(list
@@ -41,10 +43,14 @@ procedure( align( )
 		axlMsgPut("Select object(s)")
 		_transactionMark = axlDBTransactionStart()
 		while( _finish == nil
+			; get objects from previous iteration
+			_selectedObjects = axlGetSelSet()
+			; remove fixed objects from selection
+			_selectedObjects = checkForFixedObjects(_selectedObjects)
 			; wait for object selection
 			axlSelect(?groupMode nil ?prompt nil)
 			if(_selectedObjects then axlMsgPut("Choose action"))
-			; execute operation selected in form
+			; execute operation chosen in form
 			if(_handler then
 				if(_selectedObjects
 					then
@@ -60,7 +66,6 @@ procedure( align( )
 				)
 				_handler = nil
 			)
-
 		);end-while
 	);endwhen
 );end-prog
@@ -79,6 +84,9 @@ defun( alignDone ()
 		_filterOnButtons = axlGetFindFilter(t)
 		axlDBTransactionCommit( _transactionMark )
 		_transactionMark = nil
+		axlSetAlias( _oopsAlias "oops")
+		_oopsAlias = nil
+		axlCmdUnregister("alignOops")
 	)
 );end-fun
 defun( alignOops ()
@@ -96,6 +104,9 @@ defun( alignCancel ()
 		_filterOnButtons = axlGetFindFilter(t)
 		axlDBTransactionRollback( _transactionMark )
 		_transactionMark = nil
+		axlSetAlias( _oopsAlias "oops")
+		_oopsAlias = nil
+		axlCmdUnregister("alignOops")
 	)
 );end-fun
 
@@ -153,31 +164,10 @@ defun( initForm () ;
 		then axlFormSetFieldEditable(_formPtr "fStepV" t)
 		else axlFormSetFieldEditable(_formPtr "fStepV" nil)
 	)
-	; icons
-	initFormThumbnails()
 	switchForm(nil)
 ;	axlFormDisplay(_formPtr)
 );end-defun
-defun( initFormThumbnails ()
-	(prog (formPathList formPath)
-		formPathList = axlGetVariableList("formpath");
-		foreach( path formPathList
-			if(isFile(concat(path "/align-top.bmp")) then
-				formPath = path
-			)
-		)
-		if(formPath then
-			axlFormSetField(_formPtr, "align-top", concat(formPath "/align-top.bmp"))
-			axlFormSetField(_formPtr, "align-bottom", concat(formPath "/align-bottom.bmp"))
-			axlFormSetField(_formPtr, "align-centerH", concat(formPath "/align-centerH.bmp"))
-			axlFormSetField(_formPtr, "align-centerV", concat(formPath "/align-centerV.bmp"))
-			axlFormSetField(_formPtr, "align-left", concat(formPath "/align-left.bmp"))
-			axlFormSetField(_formPtr, "align-right", concat(formPath "/align-right.bmp"))
-			axlFormSetField(_formPtr, "distributeH", concat(formPath "/distributeH.bmp"))
-			axlFormSetField(_formPtr, "distributeV", concat(formPath "/distributeV.bmp"))
-		)
-	)
-);end-defun
+
 defun( switchForm (mode)
 ;	axlMsgPut("switchForm")
 	if(!mode then
@@ -242,7 +232,6 @@ defun( switchForm (mode)
 			axlFormSetFieldVisible( _formPtr "bnDistributeV" 1)
 		)
 	)
-	setSnapPointVisibility()
 );end-defun
 ;---------------Form Call Back-----------------------------------------------
 defun( _parmCallBack (form)
@@ -256,10 +245,9 @@ defun( _parmCallBack (form)
 		( "bnLeft" onLeft() )
 		( "bnCenterV"  onCenterV() )
 		( "bnRight" onRight() )
-		( "bxGapH" 
+		( "bxGapH"
 			_formData~>useGap = _formPtr->curValue
 			axlFormSetField(_formPtr "bxGapV" _formData->useGap)
-			setSnapPointVisibility()
 		)
 		( "bxStepH"
 			_formData~>useStepH = _formPtr->curValue
@@ -270,10 +258,9 @@ defun( _parmCallBack (form)
 		)
 		( "fStepH" _formData~>stepH = _formPtr->curValue )
 		( "bnDistributeH" onDistributeH() )
-		( "bxGapV" 
+		( "bxGapV"
 			_formData~>useGap = _formPtr->curValue
 			axlFormSetField(_formPtr "bxGapH" _formData->useGap)
-			setSnapPointVisibility()
 		)
 		( "bxStepV"
 			_formData~>useStepV = _formPtr->curValue
@@ -292,18 +279,6 @@ defun( _parmCallBack (form)
 	);case
 );end-defun
 
-defun( setSnapPointVisibility ()
-;	axlMsgPut("setSnapPointVisibility")
-	if(_formData->currentMode == "align" 
-		then axlFormSetFieldEditable( _formPtr "cmbSnapPoint" t)
-		else
-			if(_formData->useGap
-				then axlFormSetFieldEditable( _formPtr "cmbSnapPoint" nil)
-				else axlFormSetFieldEditable( _formPtr "cmbSnapPoint" t)
-			)
-	)
-);end-defun
-
 defun( initGlobalVariable ()
 	_finish = nil
 	if( !boundp('_formData) _formData = nil)
@@ -313,3 +288,17 @@ defun( initGlobalVariable ()
 	if( !boundp('_filterOnButtons) _filterOnButtons ='(SYMBOLS VIAS TEXT))
 );end-defun
 
+defun( initHotKeys ()
+	let( (aliases alias aliasFun)
+		axlCmdRegister( "alignOops" 'alignOops ?cmdType "sub_cmd")
+		aliases = axlGetAlias(nil)
+		foreach( alias aliases
+			aliasFun = axlGetAlias(alias)
+			if( aliasFun == "oops" _oopsAlias = alias )
+		)
+		if(_oopsAlias
+			then axlSetAlias( _oopsAlias "alignOops")
+			else axlSetAlias( "F3" "alignOops")
+		)
+	) ; let
+);end-defun
