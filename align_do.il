@@ -1,252 +1,252 @@
 ;
-;	$Source: align_do.il $ $Revision: 43:7a6ba9c5fe59 $ $Branch$ $Rev: 43 $
-;	$Author: Kapustin $ $Date: 2011-07-13 00:09 +0300 $
+;	$Source: align_do.il $ $Revision: 85:2e39a8f3efff $ $Branch$ $Rev: 85 $
+;	$Author: Kapustin $ $Date: 2012-06-18 22:27 +0300 $
 ;
 ;	files required:  align_utils.il
 ;
 ;	skill load "o:\\Sripts\\align\\align_do.il"
 
-defun( onTop ()
+defun( alnOnTop ()
 	axlMsgPut("Align by TOP boundary")
-	_handler = 'doTop
+	_alnHandler = 'alnDoTop
 	axlCancelEnterFun()
 );end-fun
-defun( doTop ()
-		axlDBCloak( 'doMoveTop() 'shape )
+defun( alnDoTop ()
+		axlDBCloak( 'alnDoMoveTop() 'shape )
 );end-fun
-defun( doMoveTop ()
+defun( alnDoMoveTop ()
 	let( (lBBoxes maxY i objectItem boxItem boxY objectY griddedY deltaY deltaPoint grids)
-		lBBoxes = getBBoxes(_selectedObjects)
-		maxY = getMaxBBoxY(lBBoxes)
-		grids = getCurrentGrid(_selectedObjects)
+		lBBoxes = alnGetBBoxes(_alnSelectedObjects)
+		maxY = alnGetMaxBBoxY(lBBoxes)
+		grids = alnGetCurrentGrid(_alnSelectedObjects)
 		; move objects
-		for( i 1 length(_selectedObjects)
-			objectItem = nthelem(i _selectedObjects)
+		for( i 1 length(_alnSelectedObjects)
+			objectItem = nthelem(i _alnSelectedObjects)
 			boxItem = nthelem(i lBBoxes)
 			boxY = yCoord(cadr(boxItem))
 			deltaY = maxY - boxY
 
-			objectY = yCoord(getObjectLocation(objectItem))	; irginal point
-			griddedY = yCoord(griddedPoint(list( 0 (objectY + deltaY) ) grids)) ; moved and snapped point
+			objectY = yCoord(alnGetObjectLocation(objectItem))	; irginal point
+			griddedY = yCoord(alnGriddedPoint(list( 0 (objectY + deltaY) ) grids)) ; moved and snapped point
 
 			deltaY = griddedY - objectY
 			deltaPoint = list( 0 deltaY)
-			moveObject( objectItem deltaPoint)
+			alnMoveObject( objectItem deltaPoint)
 
 		)
 	);end-let
 );end-fun
 
-defun( onBottom ()
+defun( alnOnBottom ()
 	axlMsgPut("Align by BOTTOM boundary")
 	axlFinishEnterFun()
-	_handler = 'doBottom
+	_alnHandler = 'alnDoBottom
 );end-fun
-defun( doBottom ()
-	axlDBCloak( 'doMoveBottom() 'shape )
+defun( alnDoBottom ()
+	axlDBCloak( 'alnDoMoveBottom() 'shape )
 );end-fun
-defun( doMoveBottom ()
+defun( alnDoMoveBottom ()
 	let( (lBBoxes minY i objectItem boxItem boxY objectY griddedY deltaY deltaPoint grids)
-		lBBoxes = getBBoxes(_selectedObjects)
-		minY = getMinBBoxY(lBBoxes)
-		grids = getCurrentGrid(_selectedObjects)
+		lBBoxes = alnGetBBoxes(_alnSelectedObjects)
+		minY = alnGetMinBBoxY(lBBoxes)
+		grids = alnGetCurrentGrid(_alnSelectedObjects)
 		; move objects
-		for( i 1 length(_selectedObjects)
-			objectItem = nthelem(i _selectedObjects)
+		for( i 1 length(_alnSelectedObjects)
+			objectItem = nthelem(i _alnSelectedObjects)
 			boxItem = nthelem(i lBBoxes)
 			boxY = yCoord(car(boxItem))
 			deltaY = minY - boxY
 
-			objectY = yCoord(getObjectLocation(objectItem))
-			griddedY = yCoord(griddedPoint(list( 0 (objectY + deltaY) ) grids))
+			objectY = yCoord(alnGetObjectLocation(objectItem))
+			griddedY = yCoord(alnGriddedPoint(list( 0 (objectY + deltaY) ) grids))
 
 			deltaY = griddedY - objectY
 			deltaPoint = list( 0 deltaY )
-			moveObject( objectItem deltaPoint)
+			alnMoveObject( objectItem deltaPoint)
 		)
 	);end-let
 );end-fun
 
-defun( onLeft ()
+defun( alnOnLeft ()
 	axlMsgPut("Align by LEFT boundary")
 	axlFinishEnterFun()
-	_handler = 'doLeft
+	_alnHandler = 'alnDoLeft
 );end-fun
-defun( doLeft ()
-	axlDBCloak( 'doMoveLeft() 'shape )
+defun( alnDoLeft ()
+	axlDBCloak( 'alnDoMoveLeft() 'shape )
 );end-fun
-defun( doMoveLeft ()
+defun( alnDoMoveLeft ()
 	let( (lBBoxes minX i objectItem boxItem boxX objectX griddedX deltaX deltaPoint grids)
-		lBBoxes = getBBoxes(_selectedObjects)
-		minX = getMinBBoxX(lBBoxes)
-		grids = getCurrentGrid(_selectedObjects)
+		lBBoxes = alnGetBBoxes(_alnSelectedObjects)
+		minX = alnGetMinBBoxX(lBBoxes)
+		grids = alnGetCurrentGrid(_alnSelectedObjects)
 		; move objects
-		for( i 1 length(_selectedObjects)
-			objectItem = nthelem(i _selectedObjects)
+		for( i 1 length(_alnSelectedObjects)
+			objectItem = nthelem(i _alnSelectedObjects)
 			boxItem = nthelem(i lBBoxes)
 			boxX = xCoord(car(boxItem))
 			deltaX = minX - boxX
 
-			objectX = xCoord(getObjectLocation(objectItem))
-			griddedX = xCoord(griddedPoint(list( (objectX + deltaX) 0 ) grids))
+			objectX = xCoord(alnGetObjectLocation(objectItem))
+			griddedX = xCoord(alnGriddedPoint(list( (objectX + deltaX) 0 ) grids))
 
 			deltaX = griddedX - objectX
 			deltaPoint = list( deltaX 0 )
-			moveObject( objectItem deltaPoint)
+			alnMoveObject( objectItem deltaPoint)
 		)
 	);end-let
 );end-fun
 
-defun( onRight ()
+defun( alnOnRight ()
 	axlMsgPut("Align by RIGHT boundary")
 	axlFinishEnterFun()
-	_handler = 'doRight
+	_alnHandler = 'alnDoRight
 );end-fun
-defun( doRight ()
-	axlDBCloak( 'doMoveRight() 'shape )
+defun( alnDoRight ()
+	axlDBCloak( 'alnDoMoveRight() 'shape )
 );end-fun
-defun( doMoveRight ()
+defun( alnDoMoveRight ()
 	let( (lBBoxes maxX i objectItem boxItem boxX objectX griddedX gridCorrection deltaX deltaPoint grids)
-		lBBoxes = getBBoxes(_selectedObjects)
-		maxX = getMaxBBoxX(lBBoxes)
-		grids = getCurrentGrid(_selectedObjects)
+		lBBoxes = alnGetBBoxes(_alnSelectedObjects)
+		maxX = alnGetMaxBBoxX(lBBoxes)
+		grids = alnGetCurrentGrid(_alnSelectedObjects)
 		; move objects
-		for( i 1 length(_selectedObjects)
-			objectItem = nthelem(i _selectedObjects)
+		for( i 1 length(_alnSelectedObjects)
+			objectItem = nthelem(i _alnSelectedObjects)
 			boxItem = nthelem(i lBBoxes)
 			boxX = xCoord(cadr(boxItem))
 			deltaX = maxX - boxX
 
-			objectX = xCoord(getObjectLocation(objectItem))
-			griddedX = xCoord( griddedPoint( list( (objectX + deltaX) 0 ) grids ) )
+			objectX = xCoord(alnGetObjectLocation(objectItem))
+			griddedX = xCoord( alnGriddedPoint( list( (objectX + deltaX) 0 ) grids ) )
 
 			deltaX = griddedX - objectX
 			deltaPoint = list( deltaX 0 )
-			moveObject( objectItem deltaPoint)
+			alnMoveObject( objectItem deltaPoint)
 		)
 	);end-let
 );end-fun
 
-defun( onCenterH ()
+defun( alnOnCenterH ()
 	axlMsgPut("Align horizontally")
 	; assign handler function
 	; call handler after exit from axlSelect()
 	; otherwise snap to grid not properly work in axlEnterPoint() function
-	_handler = 'doCenterH
+	_alnHandler = 'alnDoCenterH
 	; exite from axlSelect()
 	axlFinishEnterFun()
 );end-fun
-defun( doCenterH ()
+defun( alnDoCenterH ()
 	let( (maxY minY fixedPointY pointY)
-		maxY = maxY(_selectedObjects)
-		minY = minY(_selectedObjects)
+		maxY = alnMaxY(_alnSelectedObjects)
+		minY = alnMinY(_alnSelectedObjects)
 		fixedPointY = (maxY-minY)/2 + minY ; зафиксировать Y координату
 		; move objects
-		axlDBCloak( 'moveToHorizontal(fixedPointY) 'shape )
+		axlDBCloak( 'alnMoveToHorizontal(fixedPointY) 'shape )
 	);end-let
 );end-fun
-defun( moveToHorizontal (fixedPointY)
+defun( alnMoveToHorizontal (fixedPointY)
 	let( (deltaY deltaPoint pointY grids)
-		; snap to grid (depend on _formData->snapToGrid)
-		grids = getCurrentGrid(_selectedObjects)
-		fixedPointY = yCoord(griddedPoint( list( 0 fixedPointY) grids))
-		foreach( oItem _selectedObjects
-			pointY = yCoord(getObjectLocation(oItem))
+		; snap to grid (depend on _alnFormData->snapToGrid)
+		grids = alnGetCurrentGrid(_alnSelectedObjects)
+		fixedPointY = yCoord(alnGriddedPoint( list( 0 fixedPointY) grids))
+		foreach( oItem _alnSelectedObjects
+			pointY = yCoord(alnGetObjectLocation(oItem))
 			deltaY = fixedPointY - pointY
 			deltaPoint = list( 0 deltaY)
-			moveObject( oItem deltaPoint)
+			alnMoveObject( oItem deltaPoint)
 		)
 	);end-let
 );end-fun
 
-defun( onCenterV ()
+defun( alnOnCenterV ()
 	axlMsgPut("Align vertically")
 	axlFinishEnterFun()
-	_handler = 'doCenterV
+	_alnHandler = 'alnDoCenterV
 );end-fun
-defun( doCenterV ()
+defun( alnDoCenterV ()
 	let( (maxX minX fixedPointX)
-		maxX = maxX(_selectedObjects)
-		minX = minX(_selectedObjects)
+		maxX = alnMaxX(_alnSelectedObjects)
+		minX = alnMinX(_alnSelectedObjects)
 		fixedPointX = (maxX-minX)/2 + minX
-		axlDBCloak( 'moveToVertical(fixedPointX) 'shape )
+		axlDBCloak( 'alnMoveToVertical(fixedPointX) 'shape )
 	);end-let
 );end-fun
-defun( moveToVertical (fixedPointX)
+defun( alnMoveToVertical (fixedPointX)
 	let( (deltaX deltaPoint pointX grids)
-		; snap to grid (depend on _formData->snapToGrid)
-		grids = getCurrentGrid(_selectedObjects)
-		fixedPointX = xCoord(griddedPoint( list( fixedPointX 0) grids))
-		foreach( oItem _selectedObjects
-			pointX = xCoord(getObjectLocation(oItem))
+		; snap to grid (depend on _alnFormData->snapToGrid)
+		grids = alnGetCurrentGrid(_alnSelectedObjects)
+		fixedPointX = xCoord(alnGriddedPoint( list( fixedPointX 0) grids))
+		foreach( oItem _alnSelectedObjects
+			pointX = xCoord(alnGetObjectLocation(oItem))
 			deltaX = fixedPointX - pointX
 			deltaPoint = list( deltaX 0 )
-			moveObject( oItem deltaPoint)
+			alnMoveObject( oItem deltaPoint)
 		)
 	);end-let
 );end-fun
 
 ; -------------------- Distribute -------------------------------------
-defun( onDistributeH ()
+defun( alnOnDistributeH ()
 	axlMsgPut("Distribute horizontally")
 	; get propely ordered list of selected ojects
-	_selectedObjects = orderByX(_selectedObjects)
+	_alnSelectedObjects = alnOrderByX(_alnSelectedObjects)
 	; check mode
-	if( _formData->useGap
-		then _handler = 'doCalcStepBetweenBoundaryH
-		else _handler = 'doCalcStepH
+	if( _alnFormData->useGap
+		then _alnHandler = 'alnDoCalcStepBetweenBoundaryH
+		else _alnHandler = 'alnDoCalcStepH
 	)
 	axlFinishEnterFun()
 );end-fun
-defun( doCalcStepH ()
+defun( alnDoCalcStepH ()
 	let( (leftX rightX step grids)
-when( (axlIsDebug) axlMsgPut("doCalcStepH"))
+when( (axlIsDebug) axlMsgPut("alnDoCalcStepH"))
 		; check for step provided in form
-		if( !_formData->useStepH then
+		if( !_alnFormData->useStepH then
 			; calculate step
-			leftX = xCoord(getObjectLocation(car(_selectedObjects)))
-			rightX = xCoord(getObjectLocation(car(last(_selectedObjects))))
-			step = (rightX-leftX)/(length(_selectedObjects)-1)
-			; snap step to grid (depending from _formData->snapToGrid)
-			grids = getCurrentGrid(_selectedObjects)
-			step = xCoord(griddedPoint( list( step 0) grids))
+			leftX = xCoord(alnGetObjectLocation(car(_alnSelectedObjects)))
+			rightX = xCoord(alnGetObjectLocation(car(last(_alnSelectedObjects))))
+			step = (rightX-leftX)/(length(_alnSelectedObjects)-1)
+			; snap step to grid (depending from _alnFormData->snapToGrid)
+			grids = alnGetCurrentGrid(_alnSelectedObjects)
+			step = xCoord(alnGriddedPoint( list( step 0) grids))
 			; update form
-			_formData->stepH = step
-			(axlFormSetField _formPtr "fStepH" step)
+			_alnFormData->stepH = step
+			(axlFormSetField _alnFormPtr "fStepH" step)
 		)
 ;		axlShell("cputime start")
 ;		axlShell("cputime reset")
-		axlDBCloak( 'doDistributeH() 'shape )
-;		doDistributeH()
+		axlDBCloak( 'alnDoDistributeH() 'shape )
+;		alnDoDistributeH()
 ;		axlShell("cputime stop")
 	);end-let
 );end-fun
-defun( doDistributeH ()
+defun( alnDoDistributeH ()
 	let( (i step pointX deltaX deltaPoint grids)
-when( (axlIsDebug) axlMsgPut("doDistributeH"))
-		grids = getCurrentGrid(_selectedObjects)
-		i = xCoord(griddedPoint(getObjectLocation(car(_selectedObjects)) grids))
-		step = _formData->stepH
-		foreach( oItem _selectedObjects
-			pointX = xCoord(getObjectLocation(oItem))
+when( (axlIsDebug) axlMsgPut("alnDoDistributeH"))
+		grids = alnGetCurrentGrid(_alnSelectedObjects)
+		i = xCoord(alnGriddedPoint(alnGetObjectLocation(car(_alnSelectedObjects)) grids))
+		step = _alnFormData->stepH
+		foreach( oItem _alnSelectedObjects
+			pointX = xCoord(alnGetObjectLocation(oItem))
 			deltaX = i - pointX
 			deltaPoint = list( deltaX 0 )
-			moveObject( oItem deltaPoint)
+			alnMoveObject( oItem deltaPoint)
 			i = i + step
 		)
 	);end-let
 );end-fun
 
-defun( doCalcStepBetweenBoundaryH ()
+defun( alnDoCalcStepBetweenBoundaryH ()
 	let( (leftX prevX box lBox gap step grids)
-when( (axlIsDebug) axlMsgPut("doCalcStepBetweenBoundaryH"))
+when( (axlIsDebug) axlMsgPut("alnDoCalcStepBetweenBoundaryH"))
 		; check for step provided in form
-		if( !_formData->useStepH then
+		if( !_alnFormData->useStepH then
 			gap = 0.0
 			; get left boundary for first object
-			prevX = xCoord(car(getObjectBBox(car(_selectedObjects))))
+			prevX = xCoord(car(alnGetObjectBBox(car(_alnSelectedObjects))))
 			; calculate common gap
-			lBox = getBBoxes(_selectedObjects)
+			lBox = alnGetBBoxes(_alnSelectedObjects)
 			foreach( box lBox
 				; get left boundary
 				leftX = xCoord(car(box))
@@ -255,31 +255,31 @@ when( (axlIsDebug) axlMsgPut("doCalcStepBetweenBoundaryH"))
 				prevX = xCoord(cadr(box))
 			)
 			; calculate step
-			step = gap/(length(_selectedObjects)-1)
+			step = gap/(length(_alnSelectedObjects)-1)
 			; snap step to grid
-			grids = getCurrentGrid(_selectedObjects)
-			step = xCoord(griddedPoint( list( step 0 ) grids))
-			_formData->stepH = step
+			grids = alnGetCurrentGrid(_alnSelectedObjects)
+			step = xCoord(alnGriddedPoint( list( step 0 ) grids))
+			_alnFormData->stepH = step
 			; update form
-			axlFormSetField(_formPtr "fStepH" step)
+			axlFormSetField(_alnFormPtr "fStepH" step)
 		)
 ;		axlShell("cputime start")
 ;		axlShell("cputime reset")
-		axlDBCloak( 'doDistributeGapBetweenBoundaryH() 'shape )
-;		doDistributeGapBetweenBoundaryH()
+		axlDBCloak( 'alnDoDistributeGapBetweenBoundaryH() 'shape )
+;		alnDoDistributeGapBetweenBoundaryH()
 ;		axlShell("cputime stop")
 	);end-let
 );end-fun
-defun( doDistributeGapBetweenBoundaryH ()
+defun( alnDoDistributeGapBetweenBoundaryH ()
 	let( (step prevX oItem box leftX rightX deltaX currX destX deltaPoint grids)
-when( (axlIsDebug) axlMsgPut("doDistributeGapBetweenBoundaryH"))
-		step = _formData->stepH
+when( (axlIsDebug) axlMsgPut("alnDoDistributeGapBetweenBoundaryH"))
+		step = _alnFormData->stepH
 		; get left boundary for first object
-		prevX = xCoord(car(getObjectBBox(car(_selectedObjects)))) - step
-		grids = getCurrentGrid(_selectedObjects)
-		foreach( oItem _selectedObjects
+		prevX = xCoord(car(alnGetObjectBBox(car(_alnSelectedObjects)))) - step
+		grids = alnGetCurrentGrid(_alnSelectedObjects)
+		foreach( oItem _alnSelectedObjects
 			; current boundary
-			box = getObjectBBox(oItem)
+			box = alnGetObjectBBox(oItem)
 			leftX = xCoord(car(box))
 			rightX = xCoord(cadr(box))
 			deltaX = leftX - prevX - step
@@ -287,66 +287,66 @@ when( (axlIsDebug) axlMsgPut("doDistributeGapBetweenBoundaryH"))
 			; curent location
 			currX = xCoord(oItem->xy)
 			; destination location (grided)
-			destX = xCoord(griddedPoint(list( (currX - deltaX) 0 ) grids))
+			destX = xCoord(alnGriddedPoint(list( (currX - deltaX) 0 ) grids))
 			deltaPoint = list( (destX - currX) 0 )
-			moveObject(oItem deltaPoint)
+			alnMoveObject(oItem deltaPoint)
 			prevX = prevX + step + (rightX - leftX)
 		)
 	);end-let
 );end-fun
 
-defun( onDistributeV ()
+defun( alnOnDistributeV ()
 	axlMsgPut("Distribute vertically")
-	_selectedObjects = orderByY(_selectedObjects)
-	if( _formData->useGap
-		then _handler = 'doCalcStepBetweenBoundaryV
-		else _handler = 'doCalcStepV
+	_alnSelectedObjects = alnOrderByY(_alnSelectedObjects)
+	if( _alnFormData->useGap
+		then _alnHandler = 'alnDoCalcStepBetweenBoundaryV
+		else _alnHandler = 'alnDoCalcStepV
 	)
 	axlFinishEnterFun()
 );end-fun
-defun( doCalcStepV ()
+defun( alnDoCalcStepV ()
 	let( (botY topY step grids)
-when( (axlIsDebug) axlMsgPut("doCalcStepV"))
-		if( !_formData->useStepV then
+when( (axlIsDebug) axlMsgPut("alnDoCalcStepV"))
+		if( !_alnFormData->useStepV then
 			; calculate step
-			botY = yCoord(getObjectLocation(car(_selectedObjects)))
-			topY = yCoord(getObjectLocation(car(last(_selectedObjects))))
-			step = (topY-botY)/(length(_selectedObjects)-1)
-			; snap step to grid (depending from _formData->snapToGrid)
-			grids = getCurrentGrid(_selectedObjects)
-			step = yCoord(griddedPoint( list( 0 step) grids))
+			botY = yCoord(alnGetObjectLocation(car(_alnSelectedObjects)))
+			topY = yCoord(alnGetObjectLocation(car(last(_alnSelectedObjects))))
+			step = (topY-botY)/(length(_alnSelectedObjects)-1)
+			; snap step to grid (depending from _alnFormData->snapToGrid)
+			grids = alnGetCurrentGrid(_alnSelectedObjects)
+			step = yCoord(alnGriddedPoint( list( 0 step) grids))
 			; update form
-			_formData->stepV = step
-			(axlFormSetField _formPtr "fStepV" step)
+			_alnFormData->stepV = step
+			(axlFormSetField _alnFormPtr "fStepV" step)
 		)
-		axlDBCloak( 'doDistributeV() 'shape )
+		axlDBCloak( 'alnDoDistributeV() 'shape )
 	);end-let
 );end-fun
-defun( doDistributeV ()
+defun( alnDoDistributeV ()
 	let( (i step pointY deltaY deltaPoint grids)
-when( (axlIsDebug) axlMsgPut("doDistributeV"))
-		grids = getCurrentGrid(_selectedObjects)
-		i = yCoord(griddedPoint(getObjectLocation(car(_selectedObjects)) grids))
-		step = _formData->stepV
-		foreach( oItem _selectedObjects
-			pointY = yCoord(getObjectLocation(oItem))
+when( (axlIsDebug) axlMsgPut("alnDoDistributeV"))
+		grids = alnGetCurrentGrid(_alnSelectedObjects)
+		i = yCoord(alnGriddedPoint(alnGetObjectLocation(car(_alnSelectedObjects)) grids))
+		step = _alnFormData->stepV
+		foreach( oItem _alnSelectedObjects
+			pointY = yCoord(alnGetObjectLocation(oItem))
 			deltaY = i - pointY
 			deltaPoint = list( 0 deltaY )
-			moveObject( oItem deltaPoint)
+			alnMoveObject( oItem deltaPoint)
 			i = i + step
 		)
 	);end-let
 );end-fun
 
-defun( doCalcStepBetweenBoundaryV ()
+defun( alnDoCalcStepBetweenBoundaryV ()
 	let( (bottomY prevY box lBox gap step grids)
-when( (axlIsDebug) axlMsgPut("doCalcStepBetweenBoundaryV"))
-		if( !_formData->useStepV then
+when( (axlIsDebug) axlMsgPut("alnDoCalcStepBetweenBoundaryV"))
+		if( !_alnFormData->useStepV then
 			gap = 0.0
 			; get left boundary for first object
-			prevY = yCoord(car(getObjectBBox(car(_selectedObjects))))
+			prevY = yCoord(car(alnGetObjectBBox(car(_alnSelectedObjects))))
 			; calculate common gap
-			lBox = getBBoxes(_selectedObjects)
+			lBox = alnGetBBoxes(_alnSelectedObjects)
 			foreach( box lBox
 				; get left boundary
 				bottomY = yCoord(car(box))
@@ -355,27 +355,27 @@ when( (axlIsDebug) axlMsgPut("doCalcStepBetweenBoundaryV"))
 				prevY = yCoord(cadr(box))
 			)
 			; calculate step
-			step = gap/(length(_selectedObjects)-1)
+			step = gap/(length(_alnSelectedObjects)-1)
 			; snap step to grid
-			grids = getCurrentGrid(_selectedObjects)
-			step = yCoord(griddedPoint( list( 0 step) grids))
-			_formData->stepV = step
+			grids = alnGetCurrentGrid(_alnSelectedObjects)
+			step = yCoord(alnGriddedPoint( list( 0 step) grids))
+			_alnFormData->stepV = step
 			; update form
-			(axlFormSetField _formPtr "fStepV" step)
+			(axlFormSetField _alnFormPtr "fStepV" step)
 		)
-		axlDBCloak( 'doDistributeGapBetweenBoundaryV() 'shape )
+		axlDBCloak( 'alnDoDistributeGapBetweenBoundaryV() 'shape )
 	);end-let
 );end-fun
-defun( doDistributeGapBetweenBoundaryV ()
+defun( alnDoDistributeGapBetweenBoundaryV ()
 	let( (step prevY oItem box bottomY topY deltaY currY destY deltaPoint grids)
-when( (axlIsDebug) axlMsgPut("doDistributeGapBetweenBoundaryH"))
-		step = _formData->stepV
+when( (axlIsDebug) axlMsgPut("alnDoDistributeGapBetweenBoundaryH"))
+		step = _alnFormData->stepV
 		; get bottom boundary for first object
-		prevY = yCoord(car(getObjectBBox(car(_selectedObjects)))) - step
-		grids = getCurrentGrid(_selectedObjects)
-		foreach( oItem _selectedObjects
+		prevY = yCoord(car(alnGetObjectBBox(car(_alnSelectedObjects)))) - step
+		grids = alnGetCurrentGrid(_alnSelectedObjects)
+		foreach( oItem _alnSelectedObjects
 			; current boundary
-			box = getObjectBBox(oItem)
+			box = alnGetObjectBBox(oItem)
 			bottomY = yCoord(car(box))
 			topY = yCoord(cadr(box))
 			deltaY = bottomY - prevY - step
@@ -383,26 +383,26 @@ when( (axlIsDebug) axlMsgPut("doDistributeGapBetweenBoundaryH"))
 			; curent location
 			currY = yCoord(oItem->xy)
 			; destination location (grided)
-			destY = yCoord(griddedPoint(list( 0 (currY - deltaY) ) grids))
+			destY = yCoord(alnGriddedPoint(list( 0 (currY - deltaY) ) grids))
 			deltaPoint = list( 0 (destY - currY) )
-			moveObject( oItem deltaPoint )
+			alnMoveObject( oItem deltaPoint )
 			prevY = prevY + step + (topY - bottomY)
 		)
 	);end-let
 );end-fun
 
 ; -------------------- Pick -------------------------------------
-defun( onPickH ()
+defun( alnOnPickH ()
 	axlMsgPut("Pick horizontally")
 	axlFinishEnterFun()
-	_handler = 'doPickH
+	_alnHandler = 'alnDoPickH
 );end-fun
-defun( doPickH ()
+defun( alnDoPickH ()
 	let( (fixedObject fixedPoint fixedPointY grids)
 		fixedPoint = nil
-		if( _formData->usePickH
+		if( _alnFormData->usePickH
 		then
-			fixedPointY = _formData->pickH
+			fixedPointY = _alnFormData->pickH
 		else
 			fixedPoint = axlEnterPoint(?prompts "Select an object or point")
 			if( fixedPoint then ;nil if pressed Oops
@@ -410,35 +410,35 @@ defun( doPickH ()
 				fixedObject = axlGetSelSet()
 				if( fixedObject
 				then
-					fixedPointY = yCoord(getObjectLocation(car(fixedObject)))
+					fixedPointY = yCoord(alnGetObjectLocation(car(fixedObject)))
 				else
 					fixedPointY = yCoord(fixedPoint)
 				)
 			)
 		)
 		if( fixedPointY then ; nil if pressed Oops
-			; snap to grid (depend on _formData->snapToGrid)
-			grids = getCurrentGrid(_selectedObjects)
-			fixedPointY = yCoord(griddedPoint( list( 0 fixedPointY) grids))
-			_formData->pickH = fixedPointY
-			axlFormSetField(_formPtr "fPickH" fixedPointY)
+			; snap to grid (depend on _alnFormData->snapToGrid)
+			grids = alnGetCurrentGrid(_alnSelectedObjects)
+			fixedPointY = yCoord(alnGriddedPoint( list( 0 fixedPointY) grids))
+			_alnFormData->pickH = fixedPointY
+			axlFormSetField(_alnFormPtr "fPickH" fixedPointY)
 			; move objects
-			axlDBCloak( 'moveToHorizontal(fixedPointY) 'shape )
+			axlDBCloak( 'alnMoveToHorizontal(fixedPointY) 'shape )
 		)
 	);end-let
 );end-fun
 
-defun( onPickV ()
+defun( alnOnPickV ()
 	axlMsgPut("Pick horizontally")
 	axlFinishEnterFun()
-	_handler = 'doPickV
+	_alnHandler = 'alnDoPickV
 );end-fun
-defun( doPickV ()
+defun( alnDoPickV ()
 	let( (fixedObject fixedPoint fixedPointX grids)
 		fixedPoint = nil
-		if( _formData->usePickV
+		if( _alnFormData->usePickV
 		then
-			fixedPointX = _formData->pickV
+			fixedPointX = _alnFormData->pickV
 		else
 			fixedPoint = axlEnterPoint(?prompts "Select an object or point")
 			if( fixedPoint then ;nil if pressed Oops
@@ -446,18 +446,18 @@ defun( doPickV ()
 				fixedObject = axlGetSelSet()
 				if( fixedObject
 				then
-					fixedPointX = xCoord(getObjectLocation(car(fixedObject)))
+					fixedPointX = xCoord(alnGetObjectLocation(car(fixedObject)))
 				else
 					fixedPointX = xCoord(fixedPoint)
 				)
 			)
 		)
 		if( fixedPointX then ; nil if pressed Oops
-			grids = getCurrentGrid(_selectedObjects)
-			fixedPointX = xCoord(griddedPoint( list( fixedPointX 0) grids))
-			_formData->pickV = fixedPointX
-			axlFormSetField(_formPtr "fPickV" fixedPointX)
-			axlDBCloak( 'moveToVertical(fixedPointX) 'shape )
+			grids = alnGetCurrentGrid(_alnSelectedObjects)
+			fixedPointX = xCoord(alnGriddedPoint( list( fixedPointX 0) grids))
+			_alnFormData->pickV = fixedPointX
+			axlFormSetField(_alnFormPtr "fPickV" fixedPointX)
+			axlDBCloak( 'alnMoveToVertical(fixedPointX) 'shape )
 		)
 	);end-let
 );end-fun

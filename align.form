@@ -72,7 +72,6 @@ FORM toolwindow
 		FIELD fPickH
 			FLOC 17 7
 			REALFILLIN 7 10
-			DECIMAL 2
 		ENDFIELD
 
 #--------- Distribute H -----------------------
@@ -94,7 +93,6 @@ FORM toolwindow
 		FIELD fStepH
 			FLOC 17 10
 			REALFILLIN 7 10
-			DECIMAL 2
 		ENDFIELD
 
 #--------- Align V ----------------------------			
@@ -150,7 +148,6 @@ FORM toolwindow
 		FIELD fPickV
 			FLOC 17 19
 			REALFILLIN 7 10
-			DECIMAL 2
 		ENDFIELD
 
 #--------- Distribute V -----------------------
@@ -172,7 +169,6 @@ FORM toolwindow
 		FIELD fStepV
 			FLOC 17 22
 			REALFILLIN 7 10
-			DECIMAL 2
 		ENDFIELD
 
 #--------- Common ---------------------------
