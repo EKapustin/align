@@ -1,6 +1,6 @@
 ;
-;	$Source: align.il $ $Revision: 21:b82ac9494a26 $ $Branch$ $Rev: 21 $
-;	$Author: Kapustin $ $Date: 2011-06-05 00:46 +0300 $
+;	$Source: align.il $ $Revision: 23:fab0537ecbee $ $Branch$ $Rev: 23 $
+;	$Author: Kapustin $ $Date: 2011-06-19 15:27 +0300 $
 ;
 ;	Files required:	align_do.il
 ;					align_utils.il
@@ -132,9 +132,6 @@ defun( initForm () ;
 		_formData~>stepV = 100.0
 		axlFormSetField(_formPtr "cmbSnapPoint" "center")
 		_formData~>snapPoint = "center"
-		axlFormSetField(_formPtr "rbMode1" t)
-		axlFormSetField(_formPtr "rbMode2" nil)
-		_formData~>currentMode = "align"
 	else
 		axlFormSetField(_formPtr "bxSnapToGrid" _formData->snapToGrid)
 		axlFormSetField(_formPtr "bxGapH" _formData->useGap)
@@ -144,16 +141,6 @@ defun( initForm () ;
 		axlFormSetField(_formPtr "fStepH" _formData->stepH)
 		axlFormSetField(_formPtr "fStepV" _formData->stepV)
 		axlFormSetField(_formPtr "cmbSnapPoint" _formData->snapPoint)
-		case(_formData->currentMode
-			("align"
-				axlFormSetField(_formPtr "rbMode1" t)
-				axlFormSetField(_formPtr "rbMode2" nil)
-			)
-			("distribute"
-				axlFormSetField(_formPtr "rbMode1" nil)
-				axlFormSetField(_formPtr "rbMode2" t)
-			)
-		)
 	)
 
 	if(_formData->useStepH
@@ -164,81 +151,13 @@ defun( initForm () ;
 		then axlFormSetFieldEditable(_formPtr "fStepV" t)
 		else axlFormSetFieldEditable(_formPtr "fStepV" nil)
 	)
-	switchForm(nil)
 ;	axlFormDisplay(_formPtr)
 );end-defun
 
-defun( switchForm (mode)
-;	axlMsgPut("switchForm")
-	if(!mode then
-		if(_formData
-			then mode = _formData->currentMode
-			else mode = "align"
-		)
-	)
-	case( mode
-		("align"
-			axlFormSetFieldVisible( _formPtr "align-top" 1)
-			axlFormSetFieldVisible( _formPtr "bnTop" 1)
-			axlFormSetFieldVisible( _formPtr "align-centerH" 1)
-			axlFormSetFieldVisible( _formPtr "bnCenterH" 1)
-			axlFormSetFieldVisible( _formPtr "align-bottom" 1)
-			axlFormSetFieldVisible( _formPtr "bnBottom" 1)
-
-			axlFormSetFieldVisible( _formPtr "align-left" 1)
-			axlFormSetFieldVisible( _formPtr "bnLeft" 1)
-			axlFormSetFieldVisible( _formPtr "align-centerV" 1)
-			axlFormSetFieldVisible( _formPtr "bnCenterV" 1)
-			axlFormSetFieldVisible( _formPtr "align-right" 1)
-			axlFormSetFieldVisible( _formPtr "bnRight" 1)
-
-			axlFormSetFieldVisible( _formPtr "bxGapH" 0)
-			axlFormSetFieldVisible( _formPtr "bxStepH" 0)
-			axlFormSetFieldVisible( _formPtr "fStepH" 0)
-			axlFormSetFieldVisible( _formPtr "distributeH" 0)
-			axlFormSetFieldVisible( _formPtr "bnDistributeH" 0)
-
-			axlFormSetFieldVisible( _formPtr "bxGapV" 0)
-			axlFormSetFieldVisible( _formPtr "bxStepV" 0)
-			axlFormSetFieldVisible( _formPtr "fStepV" 0)
-			axlFormSetFieldVisible( _formPtr "distributeV" 0)
-			axlFormSetFieldVisible( _formPtr "bnDistributeV" 0)
-		)
-		("distribute"
-			axlFormSetFieldVisible( _formPtr "align-top" 0)
-			axlFormSetFieldVisible( _formPtr "bnTop" 0)
-			axlFormSetFieldVisible( _formPtr "align-centerH" 0)
-			axlFormSetFieldVisible( _formPtr "bnCenterH" 0)
-			axlFormSetFieldVisible( _formPtr "align-bottom" 0)
-			axlFormSetFieldVisible( _formPtr "bnBottom" 0)
-
-			axlFormSetFieldVisible( _formPtr "align-left" 0)
-			axlFormSetFieldVisible( _formPtr "bnLeft" 0)
-			axlFormSetFieldVisible( _formPtr "align-centerV" 0)
-			axlFormSetFieldVisible( _formPtr "bnCenterV" 0)
-			axlFormSetFieldVisible( _formPtr "align-right" 0)
-			axlFormSetFieldVisible( _formPtr "bnRight" 0)
-
-			axlFormSetFieldVisible( _formPtr "bxGapH" 1)
-			axlFormSetFieldVisible( _formPtr "bxStepH" 1)
-			axlFormSetFieldVisible( _formPtr "fStepH" 1)
-			axlFormSetFieldVisible( _formPtr "distributeH" 1)
-			axlFormSetFieldVisible( _formPtr "bnDistributeH" 1)
-
-			axlFormSetFieldVisible( _formPtr "bxGapV" 1)
-			axlFormSetFieldVisible( _formPtr "bxStepV" 1)
-			axlFormSetFieldVisible( _formPtr "fStepV" 1)
-			axlFormSetFieldVisible( _formPtr "distributeV" 1)
-			axlFormSetFieldVisible( _formPtr "bnDistributeV" 1)
-		)
-	)
-);end-defun
 ;---------------Form Call Back-----------------------------------------------
 defun( _parmCallBack (form)
 ;	axlMsgPut("_parmCallBack")
 	case( get(_formPtr 'curField)
-		( "rbMode1" _formData~>currentMode = "align" switchForm("align") )
-		( "rbMode2" _formData~>currentMode = "distribute" switchForm("distribute") )
 		( "bnTop" onTop() )
 		( "bnCenterH" onCenterH() )
 		( "bnBottom" onBottom() )
