@@ -93,12 +93,16 @@ FORM toolwindow
 			MENUBUTTON "Right" 7 3
 		ENDFIELD
 #--------- Distribute -----------------------
-		FIELD bxStepH
+		FIELD bxGapH
 			FLOC 2 3
+			CHECKLIST "Gap"
+		ENDFIELD
+		FIELD bxStepH
+			FLOC 8 3
 			CHECKLIST "Step"
 		ENDFIELD
 		FIELD fStepH
-			FLOC 10 3
+			FLOC 15 3
 			REALFILLIN 8 8
 			DECIMAL 2
 		ENDFIELD
@@ -114,12 +118,16 @@ FORM toolwindow
 			MENUBUTTON "Distribute" 9 4
 		ENDFIELD
 #--------------------------------------------------------------
-		FIELD bxStepV
+		FIELD bxGapV
 			FLOC 2 12
+			CHECKLIST "Gap"
+		ENDFIELD
+		FIELD bxStepV
+			FLOC 8 12
 			CHECKLIST "Step"
 		ENDFIELD
 		FIELD fStepV
-			FLOC 10 12
+			FLOC 15 12
 			REALFILLIN 8 8
 			DECIMAL 2
 		ENDFIELD
@@ -144,10 +152,20 @@ FORM toolwindow
 			ENUMSET 10
 			POP "snap_point"
 		ENDFIELD
+		
 		FIELD bnDone
-			FLOC 11 23
-			MENUBUTTON "Done" 7 3
+			FLOC 2 23
+			MENUBUTTON "Done " 7 3
 		ENDFIELD
+		FIELD bnOops
+			FLOC 10 23
+			MENUBUTTON "Oops " 7 3
+		ENDFIELD
+		FIELD bnCancel
+			FLOC 18 23
+			MENUBUTTON "Cancel" 7 3
+		ENDFIELD
+
 	ENDTILE
 ENDFORM
  

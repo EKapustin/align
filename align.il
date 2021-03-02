@@ -1,6 +1,6 @@
 ;
-;	$Source: align.il $ $Revision: 10:ce9f781028bc $ $Branch$ $Rev: 10 $
-;	$Author: Kapustin $ $Date: 2011-05-31 01:48 +0300 $
+;	$Source: align.il $ $Revision: 14:1c4a6f6ad5f2 $ $Branch$ $Rev: 14 $
+;	$Author: Kapustin $ $Date: 2011-05-31 22:51 +0300 $
 ;
 ;	Files required:	align_do.il
 ;					align_utils.il
@@ -22,9 +22,8 @@
 axlCmdRegister( "align" 'align )
 axlUIMenuRegister( "move" '( ("&Align" "align") ) )
 
-
 procedure( align( )
-(prog (aliasForSystemDone)
+(prog ()
 	when( axlOKToProceed()
 		axlClearSelSet()
 		initGlobalVariable()
@@ -33,11 +32,14 @@ procedure( align( )
 		popupA = axlUIPopupDefine( nil
 				(list
 					(list "Done" 'alignDone)
+					(list "Oops" 'alignOops)
+					(list "Cancel" 'alignCancel)
 				))
 		axlUIPopupSet( popupA )
 
 		axlSetFindFilter(?enabled '(GROUPS SYMBOLS PINS VIAS TEXT NAMEFORM ) ?onButtons _filterOnButtons) ; установить фильтр
 		axlMsgPut("Select object(s)")
+		_transactionMark = axlDBTransactionStart()
 		while( _finish == nil
 			; wait for object selection
 			axlSelect(?groupMode nil ?prompt nil)
@@ -46,6 +48,7 @@ procedure( align( )
 			if(_handler then
 				if(_selectedObjects
 					then
+						axlDBTransactionMark(_transactionMark)
 						funcall(_handler)
 						; refresh id
 						axlDBRefreshId(axlGetSelSet())
@@ -63,7 +66,7 @@ procedure( align( )
 );end-prog
 );endprocedure
 
-;----------------- DONE Call--------------------------------
+;----------------- Menu Call--------------------------------
 defun( alignDone ()
 	(prog ()
 		_finish = t
@@ -71,9 +74,28 @@ defun( alignDone ()
 		axlDehighlightObject(_selectedObjects)
 		axlCancelEnterFun()
 		axlClearSelSet()
-;		axlCloseFindFilter()
-		axlUIPopupSet( nil)
+		axlUIPopupSet( nil )
+		popupA = nil
 		_filterOnButtons = axlGetFindFilter(t)
+		axlDBTransactionCommit( _transactionMark )
+		_transactionMark = nil
+	)
+);end-fun
+defun( alignOops ()
+	axlDBTransactionOops(_transactionMark)
+);end-fun
+defun( alignCancel ()
+	(prog ()
+		_finish = t
+		axlFormClose(_formPtr)
+		axlDehighlightObject(_selectedObjects)
+		axlCancelEnterFun()
+		axlClearSelSet()
+		axlUIPopupSet( nil )
+		popupA = nil
+		_filterOnButtons = axlGetFindFilter(t)
+		axlDBTransactionRollback( _transactionMark )
+		_transactionMark = nil
 	)
 );end-fun
 
@@ -84,36 +106,41 @@ defun( initForm () ;
 	;_formPtr = axlFormCreate( (gensym) "align.form" '(ne canvas msglines 0) '_parmCallBack t)
 	if( ( _formData == nil ) then
 		_formData = t
-		(axlFormSetField _formPtr "bxSnapToGrid" t)
-		putprop( _formData t 'snapToGrid)
-		(axlFormSetField _formPtr "bxStepH" nil)
-		putprop( _formData nil 'useStepH)
-		(axlFormSetField _formPtr "bxStepV" nil)
-		putprop( _formData nil 'useStepV)
-		(axlFormSetField _formPtr "fStepH" 100.0)
-		putprop( _formData 100.0 'stepH)
-		(axlFormSetField _formPtr "fStepV" 100.0)
-		putprop( _formData 100.0 'stepV)
-		(axlFormSetField _formPtr "cmbSnapPoint" "origin")
-		putprop( _formData "origin" 'snapPoint)
-		(axlFormSetField _formPtr "rbMode1" t)
-		(axlFormSetField _formPtr "rbMode2" nil)
-		putprop( _formData "align" 'currentMode)
+		axlFormSetField(_formPtr "bxSnapToGrid" t)
+		_formData~>snapToGrid = t
+		axlFormSetField(_formPtr "bxGapH" t)
+		axlFormSetField(_formPtr "bxGapV" t)
+		_formData~>useGap = t
+		axlFormSetField(_formPtr "bxStepH" nil)
+		_formData~>useStepH = nil
+		axlFormSetField(_formPtr "bxStepV" nil)
+		_formData~>useStepV = nil
+		axlFormSetField(_formPtr "fStepH" 100.0)
+		_formData~>stepH = 100.0
+		axlFormSetField(_formPtr "fStepV" 100.0)
+		_formData~>stepV = 100.0
+		axlFormSetField(_formPtr "cmbSnapPoint" "center")
+		_formData~>snapPoint = "center"
+		axlFormSetField(_formPtr "rbMode1" t)
+		axlFormSetField(_formPtr "rbMode2" nil)
+		_formData~>currentMode = "align"
 	else
-		(axlFormSetField _formPtr "bxSnapToGrid" _formData->snapToGrid)
-		(axlFormSetField _formPtr "bxStepH" _formData->useStepH)
-		(axlFormSetField _formPtr "bxStepV" _formData->useStepV)
-		(axlFormSetField _formPtr "fStepH" _formData->stepH)
-		(axlFormSetField _formPtr "fStepV" _formData->stepV)
-		(axlFormSetField _formPtr "cmbSnapPoint" _formData->snapPoint)
+		axlFormSetField(_formPtr "bxSnapToGrid" _formData->snapToGrid)
+		axlFormSetField(_formPtr "bxGapH" _formData->useGap)
+		axlFormSetField(_formPtr "bxGapV" _formData->useGap)
+		axlFormSetField(_formPtr "bxStepH" _formData->useStepH)
+		axlFormSetField(_formPtr "bxStepV" _formData->useStepV)
+		axlFormSetField(_formPtr "fStepH" _formData->stepH)
+		axlFormSetField(_formPtr "fStepV" _formData->stepV)
+		axlFormSetField(_formPtr "cmbSnapPoint" _formData->snapPoint)
 		case(_formData->currentMode
 			("align"
-				(axlFormSetField _formPtr "rbMode1" t)
-				(axlFormSetField _formPtr "rbMode2" nil)
+				axlFormSetField(_formPtr "rbMode1" t)
+				axlFormSetField(_formPtr "rbMode2" nil)
 			)
 			("distribute"
-				(axlFormSetField _formPtr "rbMode1" nil)
-				(axlFormSetField _formPtr "rbMode2" t)
+				axlFormSetField(_formPtr "rbMode1" nil)
+				axlFormSetField(_formPtr "rbMode2" t)
 			)
 		)
 	)
@@ -175,11 +202,13 @@ defun( switchForm (mode)
 			axlFormSetFieldVisible( _formPtr "align-right" 1)
 			axlFormSetFieldVisible( _formPtr "bnRight" 1)
 
+			axlFormSetFieldVisible( _formPtr "bxGapH" 0)
 			axlFormSetFieldVisible( _formPtr "bxStepH" 0)
 			axlFormSetFieldVisible( _formPtr "fStepH" 0)
 			axlFormSetFieldVisible( _formPtr "distributeH" 0)
 			axlFormSetFieldVisible( _formPtr "bnDistributeH" 0)
 
+			axlFormSetFieldVisible( _formPtr "bxGapV" 0)
 			axlFormSetFieldVisible( _formPtr "bxStepV" 0)
 			axlFormSetFieldVisible( _formPtr "fStepV" 0)
 			axlFormSetFieldVisible( _formPtr "distributeV" 0)
@@ -200,33 +229,39 @@ defun( switchForm (mode)
 			axlFormSetFieldVisible( _formPtr "align-right" 0)
 			axlFormSetFieldVisible( _formPtr "bnRight" 0)
 
+			axlFormSetFieldVisible( _formPtr "bxGapH" 1)
 			axlFormSetFieldVisible( _formPtr "bxStepH" 1)
 			axlFormSetFieldVisible( _formPtr "fStepH" 1)
 			axlFormSetFieldVisible( _formPtr "distributeH" 1)
 			axlFormSetFieldVisible( _formPtr "bnDistributeH" 1)
 
+			axlFormSetFieldVisible( _formPtr "bxGapV" 1)
 			axlFormSetFieldVisible( _formPtr "bxStepV" 1)
 			axlFormSetFieldVisible( _formPtr "fStepV" 1)
 			axlFormSetFieldVisible( _formPtr "distributeV" 1)
 			axlFormSetFieldVisible( _formPtr "bnDistributeV" 1)
 		)
 	)
-
+	setSnapPointVisibility()
 );end-defun
 ;---------------Form Call Back-----------------------------------------------
 defun( _parmCallBack (form)
 ;	axlMsgPut("_parmCallBack")
 	case( get(_formPtr 'curField)
-		( "rbMode1" switchForm("align") _formData~>currentMode = "align")
-		( "rbMode2" switchForm("distribute") _formData~>currentMode = "distribute")
+		( "rbMode1" _formData~>currentMode = "align" switchForm("align") )
+		( "rbMode2" _formData~>currentMode = "distribute" switchForm("distribute") )
 		( "bnTop" onTop() )
 		( "bnCenterH" onCenterH() )
 		( "bnBottom" onBottom() )
 		( "bnLeft" onLeft() )
 		( "bnCenterV"  onCenterV() )
 		( "bnRight" onRight() )
-
-		("bxStepH"
+		( "bxGapH" 
+			_formData~>useGap = _formPtr->curValue
+			axlFormSetField(_formPtr "bxGapV" _formData->useGap)
+			setSnapPointVisibility()
+		)
+		( "bxStepH"
 			_formData~>useStepH = _formPtr->curValue
 			if(_formData->useStepH
 				then axlFormSetFieldEditable(_formPtr "fStepH" t)
@@ -235,6 +270,11 @@ defun( _parmCallBack (form)
 		)
 		( "fStepH" _formData~>stepH = _formPtr->curValue )
 		( "bnDistributeH" onDistributeH() )
+		( "bxGapV" 
+			_formData~>useGap = _formPtr->curValue
+			axlFormSetField(_formPtr "bxGapH" _formData->useGap)
+			setSnapPointVisibility()
+		)
 		( "bxStepV"
 			_formData~>useStepV = _formPtr->curValue
 			if(_formData->useStepV
@@ -247,7 +287,21 @@ defun( _parmCallBack (form)
 		( "bxSnapToGrid" _formData~>snapToGrid = _formPtr->curValue	)
 		( "cmbSnapPoint" _formData~>snapPoint = _formPtr->curValue )
 		( "bnDone" alignDone() )
+		( "bnOops" alignOops() )
+		( "bnCancel" alignCancel() )
 	);case
+);end-defun
+
+defun( setSnapPointVisibility ()
+;	axlMsgPut("setSnapPointVisibility")
+	if(_formData->currentMode == "align" 
+		then axlFormSetFieldEditable( _formPtr "cmbSnapPoint" t)
+		else
+			if(_formData->useGap
+				then axlFormSetFieldEditable( _formPtr "cmbSnapPoint" nil)
+				else axlFormSetFieldEditable( _formPtr "cmbSnapPoint" t)
+			)
+	)
 );end-defun
 
 defun( initGlobalVariable ()
