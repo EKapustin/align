@@ -18,6 +18,7 @@ FORM toolwindow
 			FLOC 1 12
 			FSIZE 25 13
 		ENDGROUP
+		
 #--------- Align H ----------------------------	
 		FIELD align-top
 			THUMBNAIL align-top
@@ -73,7 +74,7 @@ FORM toolwindow
 			REALFILLIN 7 10
 			DECIMAL 2
 		ENDFIELD
-# skill axlFormTest("align.form")
+
 #--------- Distribute H -----------------------
 		FIELD bnDistributeH
 			FLOC 2 10
@@ -151,9 +152,8 @@ FORM toolwindow
 			REALFILLIN 7 10
 			DECIMAL 2
 		ENDFIELD
-# skill axlFormTest("align.form")
-#--------- Distribute V -----------------------
 
+#--------- Distribute V -----------------------
 		FIELD bnDistributeV
 			FLOC 2 22
 			MENUBUTTON "Distrib" 7 3
@@ -174,9 +174,7 @@ FORM toolwindow
 			REALFILLIN 7 10
 			DECIMAL 2
 		ENDFIELD
-		
-		
-		
+
 #--------- Common ---------------------------
 		FIELD bxGap
 			FLOC 2 25
@@ -184,33 +182,24 @@ FORM toolwindow
 		ENDFIELD
 		
 		FIELD bxStretch
-			FLOC 13 25
+			FLOC 2 27
 			CHECKLIST "Stretch etch"
+		ENDFIELD
+		FIELD bxRipup
+			FLOC 14 27
+			CHECKLIST "Ripup etch"
 		ENDFIELD
 		
 		FIELD bxSnapToGrid
-			FLOC 2 27
+			FLOC 2 29
 			CHECKLIST "Grid snap"
 		ENDFIELD
 		FIELD cmbSnapPoint
-			FLOC 13 27
+			FLOC 13 29
 			ENUMSET 10
 			POP "snap_point"
 		ENDFIELD
-		
-#		FIELD bnDone
-#			FLOC 2 27
-#			MENUBUTTON "Done " 7 2
-#		ENDFIELD
-#		FIELD bnOops
-#			FLOC 10 27
-#			MENUBUTTON "Oops " 7 2
-#		ENDFIELD
-#		FIELD bnCancel
-#			FLOC 18 27
-#			MENUBUTTON "Cancel" 7 2
-#		ENDFIELD
-
+# skill axlFormTest("align.form")
 	ENDTILE
 ENDFORM
  

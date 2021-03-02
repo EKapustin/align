@@ -1,6 +1,6 @@
 ;
-;	$Source: align_utils.il $ $Revision: 32:720262a267b1 $ $Branch$ $Rev: 32 $
-;	$Author: Kapustin $ $Date: 2011-06-28 01:48 +0300 $
+;	$Source: align_utils.il $ $Revision: 46:55336367f001 $ $Branch$ $Rev: 46 $
+;	$Author: Kapustin $ $Date: 2011-07-22 01:57 +0300 $
 ;
 ;	skill load "o:\\Sripts\\align\\align_utils.il"
 
@@ -35,12 +35,12 @@ defun( getCurrentGrid (selectedObjects)
 				foreach( item _selectedObjects
 					if( isMirrored == item->isMirrored
 					then isMirrored = item->isMirrored
-					else return(axlDBGridGet("TOP")) ;both layers, use TOP
+					else return(axlDBGridGet(axlConductorTopLayer())) ;both layers, use TOP
 					)
 				)
 				if( isMirrored
-				then return(axlDBGridGet("BOTTOM")) ; mirrored, use BOT
-				else return(axlDBGridGet("TOP"))	; non mirrores, use TOP
+				then return(axlDBGridGet(axlConductorBottomLayer())) ; mirrored, use BOT
+				else return(axlDBGridGet(axlConductorTopLayer()))	; non mirrores, use TOP
 				)
 			)
 			( "text"	;use non-etch grid
@@ -143,7 +143,7 @@ defun( comparePositionX ( obj1 obj2 )
 ;
 defun( orderByY (objectList)
 	sort( objectList 'comparePositionY )
-);defun
+) ;defun
 defun( comparePositionY ( obj1 obj2 )
 	let( ( pt1x pt2x pt1y pt2y pt1 pt2 result)
 		pt1 = getObjectLocation(obj1)
@@ -311,6 +311,92 @@ defun( checkForFixedObjects (objectList)
 			)
 		)
 		car(resultList) ; get list from "tconc" list
+	) ; let
+) ; defun
+
+;
+; Move object to provided distance.
+; Analise useStretch and useRipup settings and respectively move/ripup connected to object CLines.
+;
+defun( moveObject (object deltaPoint) ; object = car(_selectedObjects) deltaPoint = list(10.0 -10.0) moveObject(object deltaPoint)
+	let( (segmentsToCreate segmentsToRemove pinList pin pinXY paths isVia
+			path segments segment startEnd newStartEnd segmentToCreate x1 y1 x2 y2)
+		if( (car(deltaPoint) != 0.0 || cadr(deltaPoint) != 0.0) then
+			if( (_formData->useStretch || _formData->useRipup) then
+				;get list of pins
+				pinList = object->pins
+				if( object->objType == "via" then 
+					isVia = t
+					pinList = list(object) ; hack for vias
+				) 
+				; get CLines for each pin
+				foreach( pin pinList
+					pinXY = pin->xy
+					; get paths connected to pin
+					paths = axlDBGetConnect(pin nil)
+					; get segments for each path
+					foreach( path paths
+						segments = path->segments
+						; find segment which connected to pin (points are equal)
+						foreach( segment segments
+							startEnd = segment->startEnd
+							newStartEnd = nil
+							if( car(startEnd) == pinXY
+							then
+								; calculate new segment points
+								x1 = xCoord(car(startEnd)) + xCoord(deltaPoint)
+								y1 = yCoord(car(startEnd)) + yCoord(deltaPoint)
+								x2 = xCoord(cadr(startEnd))
+								y2 = yCoord(cadr(startEnd))
+								newStartEnd = list( x1:y1 x2:y2 )
+							else
+								if( cadr(startEnd) == pinXY
+								then
+									; calculate new segment points
+									x1 = xCoord(car(startEnd))
+									y1 = yCoord(car(startEnd))
+									x2 = xCoord(cadr(startEnd)) + xCoord(deltaPoint)
+									y2 = yCoord(cadr(startEnd)) + yCoord(deltaPoint)
+									newStartEnd = list( x1:y1 x2:y2 )
+								)
+							);if
+							if(newStartEnd then
+								segmentsToRemove = cons(segment segmentsToRemove)
+								segmentToCreate = ncons(t)
+								segmentToCreate->startEnd = newStartEnd
+								segmentToCreate->width = segment->width
+								segmentToCreate->layer = segment->layer
+								segmentToCreate->netname = (segment->net)->name
+								segmentsToCreate = cons(segmentToCreate segmentsToCreate)
+							);if(newStartEnd
+						);foreach( segment segments
+					);foreach( path paths
+				);foreach( pin pinList
+				; remove old segments
+				if( segmentsToRemove then
+					foreach(segment segmentsToRemove
+						axlDeleteObject(segment)
+					)
+				)
+			);if(_formData->useStretch
+			;move object
+			axlTransformObject( object ?move deltaPoint )
+			when( isVia
+				; restore net
+				axlDBAssignNet(object car(segmentsToCreate)->netname)
+			)
+			; create new segments
+			if( (segmentsToCreate && _formData->useStretch) then
+				foreach(segment segmentsToCreate
+					startEnd = segment->startEnd
+					width = segment->width
+					layer = segment->layer
+					netname = segment->netname
+					axlDBCreateLine( startEnd width layer netname nil)
+				)
+			)
+		);if( (car(deltaPoint)
+		t ;return
 	) ; let
 ) ; defun
 

@@ -1,6 +1,6 @@
 ;
-;	$Source: align.il $ $Revision: 31:8636e158e117 $ $Branch$ $Rev: 31 $
-;	$Author: Kapustin $ $Date: 2011-06-28 01:15 +0300 $
+;	$Source: align.il $ $Revision: 45:9e29e1c746a6 $ $Branch$ $Rev: 45 $
+;	$Author: Kapustin $ $Date: 2011-07-22 01:53 +0300 $
 ;
 ;	Files required:	align_do.il
 ;					align_utils.il
@@ -18,18 +18,25 @@
 ;	Place form files to %formpath%.
 ; 	Place bitmap files to %bmppath%.
 ;
+;
 ;	skill load "o:/Sripts/align/align.il"
-; 	skill load "o:/Sripts/align/align_do.il"
+;	skill load "o:/Sripts/align/align_do.il"
 ;	skill load "o:/Sripts/align/align_utils.il"
-
-
 
 axlCmdRegister( "align" 'align  ?cmdType "interactive" ?doneCmd 'alignDone ?cancelCmd 'alignCancel )
 axlUIMenuRegister( "move" '( ("&Align" "align") ) )
+; "attachment" - store settings in design attachment
+; "property" - store settings in design property
+; "file" - store settings in file %envpath%/align_script.ini
+; any other val - don't store settings
+STORE_PLACE = "property"
+setVarWriteProtect( 'STORE_PLACE )
 
-procedure( align( )
+; @optional parameter used for call from standart Allegro command "Align components"
+procedure( align( @optional components )
 (prog ()
 	when( axlOKToProceed()
+		axlDebug(nil)
 		axlClearSelSet()
 		initGlobalVariable()
 		initForm()
@@ -56,16 +63,21 @@ procedure( align( )
 			; wait for object selection
 			axlSelect(?groupMode nil ?prompt nil)
 			; execute operation chosen in form
-			if(_handler then
-				if(_selectedObjects
+			if( _handler then
+				if( _selectedObjects
 					then
 						axlDBTransactionMark(_transactionMark)
+;						axlDBControl('drcEnable nil)
+;						axlDBControl('dynamicFilletsOn nil)
 						funcall(_handler)
 						; refresh id
 						axlDBRefreshId(axlGetSelSet())
 						; restore selection
 						_selectedObjects = refreshIDs(_selectedObjects)
-						axlAddSelectObject(_selectedObjects)
+						axlSingleSelectObject(_selectedObjects)
+;						axlDBControl('dynamicFilletsOn t)
+;						axlDBControl('drcEnable t)
+						;axlDRCUpdate(t)
 					else
 						axlMsgPut("No object(s) found")
 				)
@@ -78,21 +90,10 @@ procedure( align( )
 
 ;----------------- Menu Call--------------------------------
 defun( alignDone ()
-	(prog ()
-		_finish = t
-		axlFormClose(_formPtr)
-		axlDehighlightObject(_selectedObjects)
-		axlCancelEnterFun()
-		axlClearSelSet()
-		axlUIPopupSet( nil )
-		popupA = nil
-		_filterOnButtons = axlGetFindFilter(t)
-		axlDBTransactionCommit( _transactionMark )
-		_transactionMark = nil
-		axlSetAlias( _oopsAlias "oops")
-		_oopsAlias = nil
-		axlCmdUnregister("alignOops")
-	)
+	axlDBTransactionCommit( _transactionMark )
+	exitFromAlign()
+	if( _shapeMode == 'wysiwyg axlShapeDynamicUpdate(nil nil))
+	_shapeMode = nil
 );end-fun
 defun( alignOops ()
 	if(_handler then axlFinishEnterFun()) ;for exit from 'doPickH or 'doPickV
@@ -102,56 +103,68 @@ defun( alignOops ()
 	axlAddSelectObject(_selectedObjects)
 );end-fun
 defun( alignCancel ()
-	(prog ()
-		_finish = t
-		axlFormClose(_formPtr)
-		axlDehighlightObject(_selectedObjects)
-		axlCancelEnterFun()
-		axlClearSelSet()
-		axlUIPopupSet( nil )
-		popupA = nil
-		_filterOnButtons = axlGetFindFilter(t)
-		axlDBTransactionRollback( _transactionMark )
-		_transactionMark = nil
-		axlSetAlias( _oopsAlias "oops")
-		_oopsAlias = nil
-		axlCmdUnregister("alignOops")
-	)
+	axlDBControl('drcEnable nil)
+	axlDBTransactionRollback( _transactionMark )
+	exitFromAlign()
+	_shapeMode = nil
 );end-fun
+defun( exitFromAlign ()
+	_finish = t
+	axlFormClose(_formPtr)
+	axlDehighlightObject(_selectedObjects)
+	axlCancelEnterFun()
+	axlClearSelSet()
+	axlUIPopupSet( nil )
+	popupA = nil
+	_filterOnButtons = axlGetFindFilter(t)
+	_transactionMark = nil
+	axlSetAlias( _oopsAlias "oops")
+	_oopsAlias = nil
+	_doneAlias = nil
+	_cancelAlias = nil
+	axlCmdUnregister("alignOops")
+	axlDBControl('drcEnable t)
+	storeFormData()
+);end-defun
 
 ;-------------------Parameter form data ------------------
 defun( initForm () ;
-;	axlMsgPut("initForm")
+when( (axlIsDebug) axlMsgPut("initForm"))
 	_formPtr = axlMiniStatusLoad( (gensym) "align.form" '_parmCallBack)
 	;_formPtr = axlFormCreate( (gensym) "align.form" '(ne canvas msglines 0) '_parmCallBack t)
+	when( ( _formData == nil )
+		; first script launch, trying restore settings
+		_formData = restoreFormData()
+	)
 	if( ( _formData == nil ) then
-		_formData = t
+		_formData = ncons(t)
 
 		axlFormSetField(_formPtr "bxPickH" nil)
-		_formData~>usePickH = nil
+		_formData->usePickH = nil
 		axlFormSetField(_formPtr "bxStepH" nil)
-		_formData~>useStepH = nil
+		_formData->useStepH = nil
 		axlFormSetField(_formPtr "bxPickV" nil)
-		_formData~>usePickV = nil
+		_formData->usePickV = nil
 		axlFormSetField(_formPtr "bxStepV" nil)
-		_formData~>useStepV = nil
-
+		_formData->useStepV = nil
 		axlFormSetField(_formPtr "fPickH" 0.0)
-		_formData~>pickH = 0.0
+		_formData->pickH = 0.0
 		axlFormSetField(_formPtr "fStepH" 100.0)
-		_formData~>stepH = 100.0
+		_formData->stepH = 100.0
 		axlFormSetField(_formPtr "fPickV" 0.0)
-		_formData~>pickV = 0.0
+		_formData->pickV = 0.0
 		axlFormSetField(_formPtr "fStepV" 100.0)
-		_formData~>stepV = 100.0
-		axlFormSetField(_formPtr "bxGap" t)
-		_formData~>useGap = t
+		_formData->stepV = 100.0
+		axlFormSetField(_formPtr "bxGap" nil)
+		_formData->useGap = nil
 		axlFormSetField(_formPtr "bxStretch" t)
-		_formData~>useStretch = t
+		_formData->useStretch = t
+		axlFormSetField(_formPtr "bxRipup" nil)
+		_formData->useRipup = nil
 		axlFormSetField(_formPtr "bxSnapToGrid" t)
-		_formData~>snapToGrid = t
+		_formData->snapToGrid = t
 		axlFormSetField(_formPtr "cmbSnapPoint" "center")
-		_formData~>snapPoint = "center"
+		_formData->snapPoint = "center"
 	else
 		axlFormSetField(_formPtr "bxPickH" _formData->usePickH)
 		axlFormSetField(_formPtr "bxStepH" _formData->useStepH)
@@ -163,6 +176,7 @@ defun( initForm () ;
 		axlFormSetField(_formPtr "fStepV" _formData->stepV)
 		axlFormSetField(_formPtr "bxGap" _formData->useGap)
 		axlFormSetField(_formPtr "bxStretch" _formData->useStretch)
+		axlFormSetField(_formPtr "bxRipup" _formData->useRipup)
 		axlFormSetField(_formPtr "bxSnapToGrid" _formData->snapToGrid)
 		axlFormSetField(_formPtr "cmbSnapPoint" _formData->snapPoint)
 	)
@@ -175,9 +189,6 @@ defun( initForm () ;
 		then axlFormSetFieldEditable(_formPtr "fPickV" t)
 		else axlFormSetFieldEditable(_formPtr "fPickV" nil)
 	)
-; temporary disabled features
-	axlFormSetFieldEditable(_formPtr "bxStretch" nil)
-; temporary disabled features
 
 	if(_formData->useStepH
 		then axlFormSetFieldEditable(_formPtr "fStepH" t)
@@ -187,12 +198,22 @@ defun( initForm () ;
 		then axlFormSetFieldEditable(_formPtr "fStepV" t)
 		else axlFormSetFieldEditable(_formPtr "fStepV" nil)
 	)
+
+	if(_formData->useStretch
+	then
+		axlFormSetField(_formPtr "bxRipup" nil)
+		_formData->useRipup = nil
+	)
+	if(_formData->useRipup then
+		axlFormSetField(_formPtr "bxStretch" nil)
+		_formData->useStretch = nil
+	)
 ;	axlFormDisplay(_formPtr)
 );end-defun
 
 ;---------------Form Call Back-----------------------------------------------
 defun( _parmCallBack (form)
-;	axlMsgPut("_parmCallBack")
+when( (axlIsDebug) axlMsgPut("_parmCallBack"))
 	case( get(_formPtr 'curField)
 		( "bnTop" onTop() )
 		( "bnCenterH" onCenterH() )
@@ -201,49 +222,63 @@ defun( _parmCallBack (form)
 		( "bnCenterV"  onCenterV() )
 		( "bnRight" onRight() )
 
-		( "bxPickH" _formData~>usePickH = _formPtr->curValue
+		( "bxPickH" _formData->usePickH = _formPtr->curValue
 			if(_formData->usePickH
 				then axlFormSetFieldEditable(_formPtr "fPickH" t)
 				else axlFormSetFieldEditable(_formPtr "fPickH" nil)
 			)
 		)
-		( "fPickH" _formData~>pickH = _formPtr->curValue )
+		( "fPickH" _formData->pickH = _formPtr->curValue )
 		( "bnPickH" onPickH() )
 
-		( "bxPickV" _formData~>usePickV = _formPtr->curValue
+		( "bxPickV" _formData->usePickV = _formPtr->curValue
 			if(_formData->usePickV
 				then axlFormSetFieldEditable(_formPtr "fPickV" t)
 				else axlFormSetFieldEditable(_formPtr "fPickV" nil)
 			)
 		)
-		( "fPickV" _formData~>pickV = _formPtr->curValue )
+		( "fPickV" _formData->pickV = _formPtr->curValue )
 		( "bnPickV" onPickV() )
 
 
 		( "bxStepH"
-			_formData~>useStepH = _formPtr->curValue
+			_formData->useStepH = _formPtr->curValue
 			if(_formData->useStepH
 				then axlFormSetFieldEditable(_formPtr "fStepH" t)
 				else axlFormSetFieldEditable(_formPtr "fStepH" nil)
 			)
 		)
-		( "fStepH" _formData~>stepH = _formPtr->curValue )
+		( "fStepH" _formData->stepH = _formPtr->curValue )
 		( "bnDistributeH" onDistributeH() )
 
 		( "bxStepV"
-			_formData~>useStepV = _formPtr->curValue
+			_formData->useStepV = _formPtr->curValue
 			if(_formData->useStepV
 				then axlFormSetFieldEditable(_formPtr "fStepV" t)
 				else axlFormSetFieldEditable(_formPtr "fStepV" nil)
 			)
 		)
-		( "fStepV" _formData~>stepV = _formPtr->curValue )
+		( "fStepV" _formData->stepV = _formPtr->curValue )
 		( "bnDistributeV" onDistributeV() )
 
-		( "bxGap" _formData~>useGap = _formPtr->curValue)
-		( "bxStretch" _formData~>useStretch = _formPtr->curValue)
-		( "bxSnapToGrid" _formData~>snapToGrid = _formPtr->curValue	)
-		( "cmbSnapPoint" _formData~>snapPoint = _formPtr->curValue )
+		( "bxGap" _formData->useGap = _formPtr->curValue)
+		( "bxStretch"
+			_formData->useStretch = _formPtr->curValue
+			if(_formData->useStretch
+			then
+				axlFormSetField(_formPtr "bxRipup" nil)
+				_formData->useRipup = nil
+			)
+		)
+		( "bxRipup"
+			_formData->useRipup = _formPtr->curValue
+			if(_formData->useRipup then
+				axlFormSetField(_formPtr "bxStretch" nil)
+				_formData->useStretch = nil
+			)
+		)
+		( "bxSnapToGrid" _formData->snapToGrid = _formPtr->curValue	)
+		( "cmbSnapPoint" _formData->snapPoint = _formPtr->curValue )
 	);case
 );end-defun
 
@@ -262,7 +297,11 @@ defun( initHotKeys ()
 		aliases = axlGetAlias(nil)
 		foreach( alias aliases
 			aliasFun = axlGetAlias(alias)
-			if( aliasFun == "oops" _oopsAlias = alias )
+			case( aliasFun
+				( "oops" _oopsAlias = alias )
+				( "done" _doneAlias = alias)
+				( "cancel" _cancelAlias = alias)
+			)
 		)
 		if(_oopsAlias
 			then axlSetAlias( _oopsAlias "alignOops")
@@ -270,3 +309,87 @@ defun( initHotKeys ()
 		)
 	) ; let
 );end-defun
+
+;
+; Store form settings to design or separated file.
+;
+defun( storeFormData ()
+	let( (sFormData attachment envPath sWorkingDir fTemp)
+		case( STORE_PLACE
+			( "attachment" 
+				sFormData = sprintf(nil "%L" _formData)
+				attachment = axlGetAttachment("AlignFormData" 'string)
+				if( attachment
+				then
+					attachment->data = sFormData
+					axlSetAttachment(attachment)
+				else
+					attachment = axlCreateAttachment("AlignFormData" nil 0 'string sFormData)
+				);if
+			)
+			( "property" 
+				when( !axlDBGetPropDictEntry("ALIGN_FORM_DATA") 
+					axlDBCreatePropDictEntry("ALIGN_FORM_DATA" "string" "design" nil "" t)
+				)
+				sFormData = sprintf(nil "%L" _formData)	
+				axlDBAddProp(axlDBGetDesign(), list("ALIGN_FORM_DATA" sFormData))
+			)
+			( "file" ;!!! NOT check permissions
+				sWorkingDir = getWorkingDir()
+				envPath = car(axlGetVariableList("envpath"))
+				changeWorkingDir(envPath)
+				fTemp = outfile("align_script.ini" "w")
+				fprintf(fTemp "%L" _formData)
+				close( fTemp )
+				changeWorkingDir(sWorkingDir)
+			)
+			( t ; do nothing
+			)
+		);case
+	) ; let
+);end-defun
+
+;
+; Restore form settings from design or separated file.
+;
+defun( restoreFormData ()
+	prog( (i formData attachment sWorkingDir lEnvPath fTemp sFormData properties)
+		formData = nil
+		case( STORE_PLACE
+			( "attachment" 
+				attachment = axlGetAttachment("AlignFormData" 'string)
+				sFormData = attachment->data
+			)
+			( "property" 
+				when( axlDBGetPropDictEntry("ALIGN_FORM_DATA")
+					properties = axlDBGetProperties(axlDBGetDesign() "user")
+					sFormData = cadr(assoc( 'ALIGN_FORM_DATA properties ))
+				)
+			)
+			( "file" ;!!! NOT check data integrity
+				sWorkingDir = getWorkingDir()
+				lEnvPath = axlGetVariableList("envpath")
+				for( i 1 length(lEnvPath)
+					envPath = nthelem(i lEnvPath)
+					changeWorkingDir(envPath)
+					when( isFile("align_script.ini")
+						fTemp = infile("align_script.ini")
+						i = length(lEnvPath) + 1 ; exit from loop
+					)
+				);for
+				when( fTemp
+					gets( sFormData fTemp )
+					close( fTemp )
+				)
+				changeWorkingDir(sWorkingDir)
+			)
+			( t ; do nothing
+			)
+		);case
+		when( sFormData
+			formData = car(errsetstring(strcat("'" sFormData)))
+		)
+		return(formData)
+	) ; let
+);end-defun
+

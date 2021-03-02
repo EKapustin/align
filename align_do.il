@@ -1,6 +1,6 @@
 ;
-;	$Source: align_do.il $ $Revision: 33:51a062e54346 $ $Branch$ $Rev: 33 $
-;	$Author: Kapustin $ $Date: 2011-06-28 02:03 +0300 $
+;	$Source: align_do.il $ $Revision: 43:7a6ba9c5fe59 $ $Branch$ $Rev: 43 $
+;	$Author: Kapustin $ $Date: 2011-07-13 00:09 +0300 $
 ;
 ;	files required:  align_utils.il
 ;
@@ -31,7 +31,7 @@ defun( doMoveTop ()
 
 			deltaY = griddedY - objectY
 			deltaPoint = list( 0 deltaY)
-			axlTransformObject( objectItem ?move deltaPoint)
+			moveObject( objectItem deltaPoint)
 
 		)
 	);end-let
@@ -62,7 +62,7 @@ defun( doMoveBottom ()
 
 			deltaY = griddedY - objectY
 			deltaPoint = list( 0 deltaY )
-			axlTransformObject( objectItem ?move deltaPoint)
+			moveObject( objectItem deltaPoint)
 		)
 	);end-let
 );end-fun
@@ -92,7 +92,7 @@ defun( doMoveLeft ()
 
 			deltaX = griddedX - objectX
 			deltaPoint = list( deltaX 0 )
-			axlTransformObject( objectItem ?move deltaPoint)
+			moveObject( objectItem deltaPoint)
 		)
 	);end-let
 );end-fun
@@ -122,7 +122,7 @@ defun( doMoveRight ()
 
 			deltaX = griddedX - objectX
 			deltaPoint = list( deltaX 0 )
-			axlTransformObject( objectItem ?move deltaPoint)
+			moveObject( objectItem deltaPoint)
 		)
 	);end-let
 );end-fun
@@ -154,7 +154,7 @@ defun( moveToHorizontal (fixedPointY)
 			pointY = yCoord(getObjectLocation(oItem))
 			deltaY = fixedPointY - pointY
 			deltaPoint = list( 0 deltaY)
-			axlTransformObject( oItem ?move deltaPoint)
+			moveObject( oItem deltaPoint)
 		)
 	);end-let
 );end-fun
@@ -181,7 +181,7 @@ defun( moveToVertical (fixedPointX)
 			pointX = xCoord(getObjectLocation(oItem))
 			deltaX = fixedPointX - pointX
 			deltaPoint = list( deltaX 0 )
-			axlTransformObject( oItem ?move deltaPoint)
+			moveObject( oItem deltaPoint)
 		)
 	);end-let
 );end-fun
@@ -193,33 +193,27 @@ defun( onDistributeH ()
 	_selectedObjects = orderByX(_selectedObjects)
 	; check mode
 	if( _formData->useGap
-		then
-			if( _formData->useStepH
-				then _handler = 'doDistributeGapBetweenBoundaryH
-				else _handler = 'doCalcStepBetweenBoundaryH
-			)
-		else
-			; check for use step provided in form
-			if( _formData->useStepH
-				then _handler = 'doDistributeH
-				else _handler = 'doCalcStepH
-			)
+		then _handler = 'doCalcStepBetweenBoundaryH
+		else _handler = 'doCalcStepH
 	)
 	axlFinishEnterFun()
 );end-fun
 defun( doCalcStepH ()
 	let( (leftX rightX step grids)
-;		axlMsgPut("doCalcStepH")
-		; calculate step
-		leftX = xCoord(getObjectLocation(car(_selectedObjects)))
-		rightX = xCoord(getObjectLocation(car(last(_selectedObjects))))
-		step = (rightX-leftX)/(length(_selectedObjects)-1)
-		; snap step to grid (depending from _formData->snapToGrid)
-		grids = getCurrentGrid(_selectedObjects)
-		step = xCoord(griddedPoint( list( step 0) grids))
-		; update form
-		_formData~>stepH = step
-		(axlFormSetField _formPtr "fStepH" step)
+when( (axlIsDebug) axlMsgPut("doCalcStepH"))
+		; check for step provided in form
+		if( !_formData->useStepH then
+			; calculate step
+			leftX = xCoord(getObjectLocation(car(_selectedObjects)))
+			rightX = xCoord(getObjectLocation(car(last(_selectedObjects))))
+			step = (rightX-leftX)/(length(_selectedObjects)-1)
+			; snap step to grid (depending from _formData->snapToGrid)
+			grids = getCurrentGrid(_selectedObjects)
+			step = xCoord(griddedPoint( list( step 0) grids))
+			; update form
+			_formData->stepH = step
+			(axlFormSetField _formPtr "fStepH" step)
+		)
 ;		axlShell("cputime start")
 ;		axlShell("cputime reset")
 		axlDBCloak( 'doDistributeH() 'shape )
@@ -229,7 +223,7 @@ defun( doCalcStepH ()
 );end-fun
 defun( doDistributeH ()
 	let( (i step pointX deltaX deltaPoint grids)
-;		axlMsgPut("doDistributeH")
+when( (axlIsDebug) axlMsgPut("doDistributeH"))
 		grids = getCurrentGrid(_selectedObjects)
 		i = xCoord(griddedPoint(getObjectLocation(car(_selectedObjects)) grids))
 		step = _formData->stepH
@@ -237,7 +231,7 @@ defun( doDistributeH ()
 			pointX = xCoord(getObjectLocation(oItem))
 			deltaX = i - pointX
 			deltaPoint = list( deltaX 0 )
-			axlTransformObject( oItem ?move deltaPoint)
+			moveObject( oItem deltaPoint)
 			i = i + step
 		)
 	);end-let
@@ -245,27 +239,30 @@ defun( doDistributeH ()
 
 defun( doCalcStepBetweenBoundaryH ()
 	let( (leftX prevX box lBox gap step grids)
-;		axlMsgPut("doCalcStepBetweenBoundaryH")
-		gap = 0.0
-		; get left boundary for first object
-		prevX = xCoord(car(getObjectBBox(car(_selectedObjects))))
-		; calculate common gap
-		lBox = getBBoxes(_selectedObjects)
-		foreach( box lBox
-			; get left boundary
-			leftX = xCoord(car(box))
-			gap = gap + leftX - prevX
-			; get right boundary for next iteration
-			prevX = xCoord(cadr(box))
+when( (axlIsDebug) axlMsgPut("doCalcStepBetweenBoundaryH"))
+		; check for step provided in form
+		if( !_formData->useStepH then
+			gap = 0.0
+			; get left boundary for first object
+			prevX = xCoord(car(getObjectBBox(car(_selectedObjects))))
+			; calculate common gap
+			lBox = getBBoxes(_selectedObjects)
+			foreach( box lBox
+				; get left boundary
+				leftX = xCoord(car(box))
+				gap = gap + leftX - prevX
+				; get right boundary for next iteration
+				prevX = xCoord(cadr(box))
+			)
+			; calculate step
+			step = gap/(length(_selectedObjects)-1)
+			; snap step to grid
+			grids = getCurrentGrid(_selectedObjects)
+			step = xCoord(griddedPoint( list( step 0 ) grids))
+			_formData->stepH = step
+			; update form
+			axlFormSetField(_formPtr "fStepH" step)
 		)
-		; calculate step
-		step = gap/(length(_selectedObjects)-1)
-		; snap step to grid
-		grids = getCurrentGrid(_selectedObjects)
-		step = xCoord(griddedPoint( list( step 0 ) grids))
-		_formData~>stepH = step
-		; update form
-		axlFormSetField(_formPtr "fStepH" step)
 ;		axlShell("cputime start")
 ;		axlShell("cputime reset")
 		axlDBCloak( 'doDistributeGapBetweenBoundaryH() 'shape )
@@ -275,7 +272,7 @@ defun( doCalcStepBetweenBoundaryH ()
 );end-fun
 defun( doDistributeGapBetweenBoundaryH ()
 	let( (step prevX oItem box leftX rightX deltaX currX destX deltaPoint grids)
-;		axlMsgPut("doDistributeGapBetweenBoundaryH")
+when( (axlIsDebug) axlMsgPut("doDistributeGapBetweenBoundaryH"))
 		step = _formData->stepH
 		; get left boundary for first object
 		prevX = xCoord(car(getObjectBBox(car(_selectedObjects)))) - step
@@ -292,7 +289,7 @@ defun( doDistributeGapBetweenBoundaryH ()
 			; destination location (grided)
 			destX = xCoord(griddedPoint(list( (currX - deltaX) 0 ) grids))
 			deltaPoint = list( (destX - currX) 0 )
-			axlTransformObject( oItem ?move deltaPoint )
+			moveObject(oItem deltaPoint)
 			prevX = prevX + step + (rightX - leftX)
 		)
 	);end-let
@@ -302,39 +299,32 @@ defun( onDistributeV ()
 	axlMsgPut("Distribute vertically")
 	_selectedObjects = orderByY(_selectedObjects)
 	if( _formData->useGap
-		then
-			if( _formData->useStepV
-				then _handler = 'doDistributeGapBetweenBoundaryV
-				else _handler = 'doCalcStepBetweenBoundaryV
-			)
-		else
-			; check for use step provided in form
-			if( _formData->useStepV
-				then _handler = 'doDistributeV
-				else _handler = 'doCalcStepV
-			)
+		then _handler = 'doCalcStepBetweenBoundaryV
+		else _handler = 'doCalcStepV
 	)
 	axlFinishEnterFun()
 );end-fun
 defun( doCalcStepV ()
 	let( (botY topY step grids)
-;		axlMsgPut("doCalcStepV")
-		; calculate step
-		botY = yCoord(getObjectLocation(car(_selectedObjects)))
-		topY = yCoord(getObjectLocation(car(last(_selectedObjects))))
-		step = (topY-botY)/(length(_selectedObjects)-1)
-		; snap step to grid (depending from _formData->snapToGrid)
-		grids = getCurrentGrid(_selectedObjects)
-		step = yCoord(griddedPoint( list( 0 step) grids))
-		; update form
-		_formData~>stepV = step
-		(axlFormSetField _formPtr "fStepV" step)
+when( (axlIsDebug) axlMsgPut("doCalcStepV"))
+		if( !_formData->useStepV then
+			; calculate step
+			botY = yCoord(getObjectLocation(car(_selectedObjects)))
+			topY = yCoord(getObjectLocation(car(last(_selectedObjects))))
+			step = (topY-botY)/(length(_selectedObjects)-1)
+			; snap step to grid (depending from _formData->snapToGrid)
+			grids = getCurrentGrid(_selectedObjects)
+			step = yCoord(griddedPoint( list( 0 step) grids))
+			; update form
+			_formData->stepV = step
+			(axlFormSetField _formPtr "fStepV" step)
+		)
 		axlDBCloak( 'doDistributeV() 'shape )
 	);end-let
 );end-fun
 defun( doDistributeV ()
 	let( (i step pointY deltaY deltaPoint grids)
-;		axlMsgPut("doDistributeV")
+when( (axlIsDebug) axlMsgPut("doDistributeV"))
 		grids = getCurrentGrid(_selectedObjects)
 		i = yCoord(griddedPoint(getObjectLocation(car(_selectedObjects)) grids))
 		step = _formData->stepV
@@ -342,7 +332,7 @@ defun( doDistributeV ()
 			pointY = yCoord(getObjectLocation(oItem))
 			deltaY = i - pointY
 			deltaPoint = list( 0 deltaY )
-			axlTransformObject( oItem ?move deltaPoint)
+			moveObject( oItem deltaPoint)
 			i = i + step
 		)
 	);end-let
@@ -350,33 +340,35 @@ defun( doDistributeV ()
 
 defun( doCalcStepBetweenBoundaryV ()
 	let( (bottomY prevY box lBox gap step grids)
-;		axlMsgPut("doCalcStepBetweenBoundaryV")
-		gap = 0.0
-		; get left boundary for first object
-		prevY = yCoord(car(getObjectBBox(car(_selectedObjects))))
-		; calculate common gap
-		lBox = getBBoxes(_selectedObjects)
-		foreach( box lBox
-			; get left boundary
-			bottomY = yCoord(car(box))
-			gap = gap + bottomY - prevY
-			; get right boundary for next iteration
-			prevY = yCoord(cadr(box))
+when( (axlIsDebug) axlMsgPut("doCalcStepBetweenBoundaryV"))
+		if( !_formData->useStepV then
+			gap = 0.0
+			; get left boundary for first object
+			prevY = yCoord(car(getObjectBBox(car(_selectedObjects))))
+			; calculate common gap
+			lBox = getBBoxes(_selectedObjects)
+			foreach( box lBox
+				; get left boundary
+				bottomY = yCoord(car(box))
+				gap = gap + bottomY - prevY
+				; get right boundary for next iteration
+				prevY = yCoord(cadr(box))
+			)
+			; calculate step
+			step = gap/(length(_selectedObjects)-1)
+			; snap step to grid
+			grids = getCurrentGrid(_selectedObjects)
+			step = yCoord(griddedPoint( list( 0 step) grids))
+			_formData->stepV = step
+			; update form
+			(axlFormSetField _formPtr "fStepV" step)
 		)
-		; calculate step
-		step = gap/(length(_selectedObjects)-1)
-		; snap step to grid
-		grids = getCurrentGrid(_selectedObjects)
-		step = yCoord(griddedPoint( list( 0 step) grids))
-		_formData~>stepV = step
-		; update form
-		(axlFormSetField _formPtr "fStepV" step)
 		axlDBCloak( 'doDistributeGapBetweenBoundaryV() 'shape )
 	);end-let
 );end-fun
 defun( doDistributeGapBetweenBoundaryV ()
 	let( (step prevY oItem box bottomY topY deltaY currY destY deltaPoint grids)
-;		axlMsgPut("doDistributeGapBetweenBoundaryH")
+when( (axlIsDebug) axlMsgPut("doDistributeGapBetweenBoundaryH"))
 		step = _formData->stepV
 		; get bottom boundary for first object
 		prevY = yCoord(car(getObjectBBox(car(_selectedObjects)))) - step
@@ -393,7 +385,7 @@ defun( doDistributeGapBetweenBoundaryV ()
 			; destination location (grided)
 			destY = yCoord(griddedPoint(list( 0 (currY - deltaY) ) grids))
 			deltaPoint = list( 0 (destY - currY) )
-			axlTransformObject( oItem ?move deltaPoint )
+			moveObject( oItem deltaPoint )
 			prevY = prevY + step + (topY - bottomY)
 		)
 	);end-let
@@ -428,7 +420,7 @@ defun( doPickH ()
 			; snap to grid (depend on _formData->snapToGrid)
 			grids = getCurrentGrid(_selectedObjects)
 			fixedPointY = yCoord(griddedPoint( list( 0 fixedPointY) grids))
-			_formData~>pickH = fixedPointY
+			_formData->pickH = fixedPointY
 			axlFormSetField(_formPtr "fPickH" fixedPointY)
 			; move objects
 			axlDBCloak( 'moveToHorizontal(fixedPointY) 'shape )
@@ -463,7 +455,7 @@ defun( doPickV ()
 		if( fixedPointX then ; nil if pressed Oops
 			grids = getCurrentGrid(_selectedObjects)
 			fixedPointX = xCoord(griddedPoint( list( fixedPointX 0) grids))
-			_formData~>pickV = fixedPointX
+			_formData->pickV = fixedPointX
 			axlFormSetField(_formPtr "fPickV" fixedPointX)
 			axlDBCloak( 'moveToVertical(fixedPointX) 'shape )
 		)
