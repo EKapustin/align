@@ -1,0 +1,153 @@
+FILE_TYPE=FORM_DEFN VERSION=2
+# skill axlFormTest("align.form")
+FORM toolwindow
+	FIXED
+	PORT 28 40
+	HEADER "Align & Distribute"
+	
+	POPUP <snap_point>"Origin""origin","Body Center""center","Pin #1""pin".
+	
+	TILE
+#--------- Common ---------------------------
+		FIELD rbMode1
+			FLOC 2 0
+			CHECKLIST "Align" "rbMode"
+		ENDFIELD
+		FIELD rbMode2
+			FLOC 10 0
+			CHECKLIST "Distribute" "rbMode"
+		ENDFIELD
+	
+		GROUP "Horizontal"
+			FLOC 1 1
+			FSIZE 25 9
+		ENDGROUP
+		GROUP "Vertical"
+			FLOC 1 10
+			FSIZE 25 9
+		ENDGROUP
+#--------- Align ----------------------------	
+		FIELD align-top
+			THUMBNAIL align-top
+			OPTIONS stretch
+			FLOC 3 4
+			FSIZE 5 3
+		ENDFIELD
+		FIELD bnTop
+			FLOC 2 7
+			MENUBUTTON "Top" 7 3
+		ENDFIELD
+		
+		FIELD align-centerH
+			THUMBNAIL align-centerH
+			OPTIONS stretch
+			FLOC 11 4
+			FSIZE 5 3
+		ENDFIELD
+		FIELD bnCenterH
+			FLOC 10 7
+			MENUBUTTON "Center" 7 3
+		ENDFIELD
+		
+		FIELD align-bottom
+			THUMBNAIL align-bottom
+			OPTIONS stretch
+			FLOC 19 4
+			FSIZE 5 3
+		ENDFIELD
+		FIELD bnBottom
+			FLOC 18 7
+			MENUBUTTON "Bottom" 7 3
+		ENDFIELD
+#--------------------------------------------------------------		
+		FIELD align-left
+			THUMBNAIL align-left
+			OPTIONS stretch
+			FLOC 3 13
+			FSIZE 5 3
+		ENDFIELD
+		FIELD bnLeft
+			FLOC 2 16
+			MENUBUTTON "Left" 7 3
+		ENDFIELD
+		
+		FIELD align-centerV
+			THUMBNAIL align-centerV
+			OPTIONS stretch
+			FLOC 11 13
+			FSIZE 5 3
+		ENDFIELD
+		FIELD bnCenterV
+			FLOC 10 16
+			MENUBUTTON "Center" 7 3
+		ENDFIELD
+		
+		FIELD align-right
+			THUMBNAIL align-right
+			OPTIONS stretch
+			FLOC 19 13
+			FSIZE 5 3
+		ENDFIELD
+		FIELD bnRight
+			FLOC 18 16
+			MENUBUTTON "Right" 7 3
+		ENDFIELD
+#--------- Distribute -----------------------
+		FIELD bxStepH
+			FLOC 2 3
+			CHECKLIST "Step"
+		ENDFIELD
+		FIELD fStepH
+			FLOC 10 3
+			REALFILLIN 8 8
+			DECIMAL 2
+		ENDFIELD
+		
+		FIELD distributeH
+			THUMBNAIL distributeH
+			OPTIONS stretch
+			FLOC 2 6
+			FSIZE 5 3
+		ENDFIELD
+		FIELD bnDistributeH
+			FLOC 10 6
+			MENUBUTTON "Distribute" 9 4
+		ENDFIELD
+#--------------------------------------------------------------
+		FIELD bxStepV
+			FLOC 2 12
+			CHECKLIST "Step"
+		ENDFIELD
+		FIELD fStepV
+			FLOC 10 12
+			REALFILLIN 8 8
+			DECIMAL 2
+		ENDFIELD
+		
+		FIELD distributeV
+			THUMBNAIL distributeV
+			OPTIONS stretch
+			FLOC 2 15
+			FSIZE 5 3
+		ENDFIELD
+		FIELD bnDistributeV
+			FLOC 10 15
+			MENUBUTTON "Distribute" 9 4
+		ENDFIELD
+#--------- Common ---------------------------
+		FIELD bxSnapToGrid
+			FLOC 2 20
+			CHECKLIST "Snap to grid"
+		ENDFIELD
+		FIELD cmbSnapPoint
+			FLOC 13 20
+			ENUMSET 10
+			POP "snap_point"
+		ENDFIELD
+		FIELD bnDone
+			FLOC 11 23
+			MENUBUTTON "Done" 7 3
+		ENDFIELD
+	ENDTILE
+ENDFORM
+ 
