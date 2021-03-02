@@ -1,6 +1,6 @@
 ;
-;	$Source: align.il $ $Revision: 56:cbcf9511a712 $ $Branch$ $Rev: 56 $
-;	$Author: Kapustin $ $Date: 2011-08-07 15:34 +0300 $
+;	$Source: align.il $ $Revision: 62:89a17f0237c8 $ $Branch$ $Rev: 62 $
+;	$Author: Kapustin $ $Date: 2011-09-01 01:54 +0300 $
 ;
 ;	Files required:	align_do.il
 ;					align_utils.il
@@ -18,20 +18,21 @@
 ;	Place form files to %formpath%.
 ; 	Place bitmap files to %bmppath%.
 ;
-;
 ;	skill load "o:/Sripts/align/align.il"
 ;	skill load "o:/Sripts/align/align_do.il"
 ;	skill load "o:/Sripts/align/align_utils.il"
 
 axlCmdRegister( "align" 'align  ?cmdType "interactive" ?doneCmd 'alignDone ?cancelCmd 'alignCancel )
 axlUIMenuRegister( "move" '( ("&Align" "align") ) )
-; "attachment" - store settings in design attachment
-; "property" - store settings in design property
-; "file" - store settings in file %envpath%/align_script.ini
-; any other val - don't store settings
-STORE_PLACE = "property"
-setVarWriteProtect( 'STORE_PLACE )
 
+;  reload script, only for development purpose
+/*axlCmdRegister( "lo" 'lo)
+procedure( lo()
+	load("o:/Sripts/align/align.il")
+	load("o:/Sripts/align/align_do.il")
+	load("o:/Sripts/align/align_utils.il")
+)
+*/
 ; @optional parameter used for call from standart Allegro command "Align components"
 procedure( align( @optional components )
 (prog ()
@@ -115,11 +116,7 @@ defun( exitFromAlign ()
 	popupA = nil
 	_filterOnButtons = axlGetFindFilter(t)
 	_transactionMark = nil
-	axlSetAlias( _oopsAlias "oops")
-	_oopsAlias = nil
-	_doneAlias = nil
-	_cancelAlias = nil
-	axlCmdUnregister("alignOops")
+	restoreHotKeys()
 	axlDBControl('drcEnable t)
 	storeFormData()
 );end-defun
@@ -292,7 +289,6 @@ when( (axlIsDebug) axlMsgPut("_parmCallBack"))
 			)
 		)
 		( "sPinNumber" _formData->snapPinNumber = _formPtr->curValue)
-		
 	);case
 );end-defun
 
@@ -306,100 +302,115 @@ defun( initGlobalVariable ()
 );end-defun
 
 defun( initHotKeys ()
-	let( (aliases alias aliasFun)
+	let( (aliases alias aliasFunc funckeys funckey funckeyFunc)
+		; find hotkey for oops command
 		axlCmdRegister( "alignOops" 'alignOops ?cmdType "sub_cmd")
 		aliases = axlGetAlias(nil)
 		foreach( alias aliases
-			aliasFun = axlGetAlias(alias)
-			case( aliasFun
+			aliasFunc = axlGetAlias(alias)
+			case( aliasFunc
 				( "oops" _oopsAlias = alias )
-				( "done" _doneAlias = alias)
-				( "cancel" _cancelAlias = alias)
 			)
 		)
-		if(_oopsAlias
+		if( boundp('_oopsAlias) && _oopsAlias
 			then axlSetAlias( _oopsAlias "alignOops")
 			else axlSetAlias( "F3" "alignOops")
 		)
+		
+		; ACTIONS
+		; store funckeys
+		funckeys = axlGetFunckey(nil)
+		_alnOriginalFunckeys = nil
+		foreach( funckey funckeys
+			funckeyFunc = axlGetFunckey(funckey)
+			_alnOriginalFunckeys = cons(list(funckey funckeyFunc) _alnOriginalFunckeys)
+		)
+		axlCmdRegister( "alnTop" 'onTop ?cmdType "sub_cmd")
+		axlCmdRegister( "alnBottom" 'onBottom ?cmdType "sub_cmd")
+		axlCmdRegister( "alnLeft" 'onLeft ?cmdType "sub_cmd")
+		axlCmdRegister( "alnRight" 'onRight ?cmdType "sub_cmd")
+		axlCmdRegister( "alnCenterH" 'onCenterH ?cmdType "sub_cmd")
+		axlCmdRegister( "alnCenterV" 'onCenterV ?cmdType "sub_cmd")
+		axlCmdRegister( "alnDistributeH" 'onDistributeH ?cmdType "sub_cmd")
+		axlCmdRegister( "alnDistributeV" 'onDistributeV ?cmdType "sub_cmd")
+		axlCmdRegister( "alnPickH" 'onPickH ?cmdType "sub_cmd")
+		axlCmdRegister( "alnPickV" 'onPickV ?cmdType "sub_cmd")
+		axlSetFunckey( "a" "alnLeft")
+		axlSetFunckey( "s" "alnBottom")
+		axlSetFunckey( "w" "alnTop")
+		axlSetFunckey( "d" "alnRight")
+		axlSetFunckey( "q" "alnCenterH")
+		axlSetFunckey( "z" "alnCenterV")
+		axlSetFunckey( "e" "alnDistributeH")
+		axlSetFunckey( "c" "alnDistributeV")
+		axlSetFunckey( "r" "alnPickH")
+		axlSetFunckey( "v" "alnPickV")
+	) ; let
+);end-defun
+
+defun( restoreHotKeys ()
+	let( (funckey)
+		
+		when(boundp('_oopsAlias) && _oopsAlias
+			axlSetAlias( _oopsAlias "oops")
+			_oopsAlias = nil
+		)
+		; restore funckeys
+		foreach( funckey _alnOriginalFunckeys
+			when( !axlIsProtectAlias(car(funckey)) ; skip readonly
+				axlSetFunckey(car(funckey) cadr(funckey))
+			)
+		)
+		_alnOriginalFunckeys = nil
+		axlCmdUnregister("alignOops")
+		axlCmdUnregister("alnLeft")
+		axlCmdUnregister("alnBottom")
+		axlCmdUnregister("alnTop")
+		axlCmdUnregister("alnRight")
+		axlCmdUnregister("alnCenterH")
+		axlCmdUnregister("alnCenterV")
+		axlCmdUnregister("alnDistributeH")
+		axlCmdUnregister("alnDistributeV")
+		axlCmdUnregister("alnPickH")
+		axlCmdUnregister("alnPickV")
+		axlSetAlias( "a" nil)
+		axlSetAlias( "s" nil)
+		axlSetAlias( "w" nil)
+		axlSetAlias( "d" nil)
+		axlSetAlias( "q" nil)
+		axlSetAlias( "z" nil)
+		axlSetAlias( "e" nil)
+		axlSetAlias( "c" nil)
+		axlSetAlias( "r" nil)
+		axlSetAlias( "v" nil)
 	) ; let
 );end-defun
 
 ;
-; Store form settings to design or separated file.
-;
+; Store form settings to attachment.
+; 
 defun( storeFormData ()
-	let( (sFormData attachment envPath sWorkingDir fTemp)
-		case( STORE_PLACE
-			( "attachment" 
-				sFormData = sprintf(nil "%L" _formData)
-				attachment = axlGetAttachment("AlignFormData" 'string)
-				if( attachment
-				then
-					attachment->data = sFormData
-					axlSetAttachment(attachment)
-				else
-					attachment = axlCreateAttachment("AlignFormData" nil 0 'string sFormData)
-				);if
-			)
-			( "property" 
-				when( !axlDBGetPropDictEntry("ALIGN_FORM_DATA") 
-					axlDBCreatePropDictEntry("ALIGN_FORM_DATA" "string" "design" nil "" t)
-				)
-				sFormData = sprintf(nil "%L" _formData)	
-				axlDBAddProp(axlDBGetDesign(), list("ALIGN_FORM_DATA" sFormData))
-			)
-			( "file" ;!!! NOT check permissions
-				sWorkingDir = getWorkingDir()
-				envPath = car(axlGetVariableList("envpath"))
-				changeWorkingDir(envPath)
-				fTemp = outfile("align_script.ini" "w")
-				fprintf(fTemp "%L" _formData)
-				close( fTemp )
-				changeWorkingDir(sWorkingDir)
-			)
-			( t ; do nothing
-			)
-		);case
+	let( (sFormData attachment )
+		sFormData = sprintf(nil "%L" _formData)
+		attachment = axlGetAttachment("AlignFormData" 'string)
+		if( attachment
+		then
+			attachment->data = sFormData
+			axlSetAttachment(attachment "QWE123qwe")
+		else
+			attachment = axlCreateAttachment("AlignFormData" "QWE123qwe" 0 'string sFormData)
+		);if
 	) ; let
 );end-defun
 
 ;
-; Restore form settings from design or separated file.
+; Restore form settings from attachment.
 ;
 defun( restoreFormData ()
-	prog( (i formData attachment sWorkingDir lEnvPath fTemp sFormData properties)
+	prog( (formData attachment sFormData )
 		formData = nil
-		case( STORE_PLACE
-			( "attachment" 
-				attachment = axlGetAttachment("AlignFormData" 'string)
-				sFormData = attachment->data
-			)
-			( "property" 
-				when( axlDBGetPropDictEntry("ALIGN_FORM_DATA")
-					properties = axlDBGetProperties(axlDBGetDesign() "user")
-					sFormData = cadr(assoc( 'ALIGN_FORM_DATA properties ))
-				)
-			)
-			( "file" ;!!! NOT check data integrity
-				sWorkingDir = getWorkingDir()
-				lEnvPath = axlGetVariableList("envpath")
-				for( i 1 length(lEnvPath)
-					envPath = nthelem(i lEnvPath)
-					changeWorkingDir(envPath)
-					when( isFile("align_script.ini")
-						fTemp = infile("align_script.ini")
-						i = length(lEnvPath) + 1 ; exit from loop
-					)
-				);for
-				when( fTemp
-					gets( sFormData fTemp )
-					close( fTemp )
-				)
-				changeWorkingDir(sWorkingDir)
-			)
-			( t ; do nothing
-			)
-		);case
+		attachment = axlGetAttachment("AlignFormData" 'string)
+		sFormData = attachment->data
 		when( sFormData
 			formData = car(errsetstring(strcat("'" sFormData)))
 		)
